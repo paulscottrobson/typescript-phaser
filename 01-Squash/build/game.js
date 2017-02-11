@@ -23,7 +23,7 @@ var MainState = (function (_super) {
     }
     MainState.prototype.preload = function () {
         this.game.load.image("block", "assets/sprites/block.png");
-        this.game.load.audio("short", "assets/sounds/short.ogg");
+        this.game.load.audio("short", ["assets/sounds/short.mp3", "assets/sounds/short.ogg"]);
     };
     MainState.prototype.create = function () {
         this.game.scale.pageAlignHorizontally = true;
@@ -86,6 +86,11 @@ var Ball = (function (_super) {
         _this.body.velocity.y = -Math.sin(angle) * Ball.BALL_SPEED;
         return _this;
     }
+    Ball.prototype.update = function () {
+        if (this.y > this.game.height * 3 / 2) {
+            this.game.state.start("Main");
+        }
+    };
     return Ball;
 }(SolidBlock));
 Ball.BALL_SIZE = 32;

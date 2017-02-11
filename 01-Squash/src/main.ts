@@ -47,7 +47,7 @@ class MainState extends Phaser.State {
      */
     preload(): void {
         this.game.load.image("block","assets/sprites/block.png");
-        this.game.load.audio("short","assets/sounds/short.ogg");
+        this.game.load.audio("short",["assets/sounds/short.mp3","assets/sounds/short.ogg"]);
     }
     /**
      * Create the state
@@ -184,6 +184,17 @@ class Ball extends SolidBlock {
         // Apply velocity to that angle. 
         this.body.velocity.x = Math.cos(angle)*Ball.BALL_SPEED;
         this.body.velocity.y = -Math.sin(angle)*Ball.BALL_SPEED;
+    }
+
+    /**
+     * Update restarts game if out of bounds
+     * 
+     * @memberOf Ball
+     */
+    update(): void {
+        if (this.y > this.game.height * 3 / 2) {
+            this.game.state.start("Main");
+        }
     }
 }
 
