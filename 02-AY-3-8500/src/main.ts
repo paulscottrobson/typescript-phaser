@@ -18,7 +18,7 @@ class PongGame extends Phaser.Game {
         super(960,640,Phaser.AUTO,"");
         // Create a new state and switch to it.
         this.state.add("Preload", new PreloadState());
-        this.state.add("DemoGame",new SoccerGame());
+        this.state.add("DemoGame",new TennisGame());
         this.state.add("Dead",new Phaser.State());
         this.state.start("Preload");
     }

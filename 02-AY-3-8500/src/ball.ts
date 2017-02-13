@@ -25,7 +25,6 @@ class Ball extends WhiteRect {
         this.body.bounce.set(1,1);
         this.anchor.set(0.5,0.5);
         this.velocity = velocity;
-        this.launch(40);
     }
 
     launch(angle:number) : void {

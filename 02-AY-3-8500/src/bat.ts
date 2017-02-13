@@ -12,7 +12,7 @@ class Bat extends WhiteRect {
     private static BAT_WIDTH:number = 16;
     private direction:ObjectPos;
     private batHeight:number;
-
+    private controller:Controller;
 
     /**
      * Creates an instance of Bat.
@@ -35,8 +35,40 @@ class Bat extends WhiteRect {
         this.anchor.setTo(0.5,0.5);
         this.direction = direction;
         this.batHeight = height;
+        this.controller = null;
     }
 
+    /**
+     * Tidy up 
+     * @memberOf Bat
+     */
+    destroy() : void {
+        super.destroy();
+        this.controller.destroy();
+        this.controller = null;
+    }
+
+    
+    /**
+     * Set the controller.
+     * 
+     * @param {Controller} controller
+     * 
+     * @memberOf Bat
+     */
+    setController(controller:Controller) : void {
+        this.controller = controller;
+    }
+
+    /**
+     * Update the bat using the controller object.
+     * @memberOf Bat
+     */
+    update() : void {
+        this.y = this.y + this.controller.getMovement() * 10;
+        this.y = Math.max(this.y,this.batHeight/2);
+        this.y = Math.min(this.y,this.game.height-this.batHeight/2);
+    }
 
     /**
      * Find resulting angle when ball hits bat.

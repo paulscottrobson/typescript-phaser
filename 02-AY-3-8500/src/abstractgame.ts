@@ -14,7 +14,9 @@ class AbstractGame extends Phaser.State {
 
     private wallGroup:Phaser.Group;
     private batGroup:Phaser.Group;
-    private ball:Ball;
+    protected ball:Ball;
+    protected ballNumber:number;
+
 
     // Switch posiions.
     private ballAngles:boolean = true;
@@ -48,11 +50,15 @@ class AbstractGame extends Phaser.State {
         this.createGameArea();
         // Create a new ball to play with.
         this.ball = new Ball(this.game,this.ballSpeed ? this.game.width : this.game.width / 2);
+        this.ballNumber = 0;
         // Create the players
         this.createPlayers();
+        // And start the game. Randomly pick left or right hand side.
+        this.serve(this.rnd.between(0,1) ? ObjectPos.Left : ObjectPos.Right);
     }
 
     destroy(): void {
+        this.ball = null;
         this.wallGroup = null;
         this.batGroup = null;
     }
@@ -63,6 +69,28 @@ class AbstractGame extends Phaser.State {
                                                 (b,w) => { this.sndWall.play(); });
         // For hitting a bat, we work out the new angle (depends where the ball hit the bat)                                                
         this.game.physics.arcade.overlap(this.ball,this.batGroup,this.ballBatHandler,null,this);
+    }
+
+    /**
+     * Serve a ball from either the left side or the right. 
+     * Can be overridden for games like Squash.
+     * 
+     * @param {ObjectPos} side
+     * 
+     * @memberOf AbstractGame
+     */
+    serve(side:ObjectPos) : void {
+        // Count is available for squash and similar
+        this.ballNumber++;
+        // Work out ball position.
+        this.ball.x = (side == ObjectPos.Left ? 10 : 90) * this.game.width / 100;
+        this.ball.y = this.rnd.between(25,75) * this.game.height / 100;
+        // Work out serve angle
+        var angle = this.rnd.between(1,2) * 20
+        if (this.rnd.between(0,1) != 0) { angle = -angle; }
+        if (side == ObjectPos.Right) { angle = 180-angle; }
+        // And go !
+        this.ball.launch(angle);
     }
 
     /**
@@ -161,6 +189,9 @@ class AbstractGame extends Phaser.State {
     protected addBat(direction:ObjectPos,xPercent:number) {
         var batHeight:number = this.game.height / (this.batSize ? 10 : 5);
         var r:Bat = new Bat(this.game,xPercent,direction,batHeight);
+        r.setController(direction == ObjectPos.Left ? new KeyboardController(this.game,this.ball,r) : 
+                                                      new AIController(this.ball,r));
+
         this.game.physics.arcade.enableBody(r);
         this.batGroup.add(r);
     }
@@ -178,14 +209,26 @@ class SoccerGame extends AbstractGame {
 
     createGameArea() : void {
         this.centreLine();
-        this.backWall(ObjectPos.Left,false);
-        this.backWall(ObjectPos.Right,false);        
+        this.backWall(ObjectPos.Left,true);
+        this.backWall(ObjectPos.Right,true);        
     }
 
     createPlayers(): void {
         this.addBat(ObjectPos.Left,5);
-        this.addBat(ObjectPos.Left,75);
+        this.addBat(ObjectPos.Left,70);
         this.addBat(ObjectPos.Right,5);
         this.addBat(ObjectPos.Right,75);
+    }
+}
+
+class TennisGame extends AbstractGame {
+
+    createGameArea() : void {
+        this.centreLine();
+    }
+
+    createPlayers(): void {
+        this.addBat(ObjectPos.Left,5);
+        this.addBat(ObjectPos.Right,5);
     }
 }
