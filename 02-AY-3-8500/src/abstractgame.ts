@@ -16,7 +16,8 @@ class AbstractGame extends Phaser.State {
     private batGroup:Phaser.Group;
     protected ball:Ball;
     protected ballNumber:number;
-
+    private score:Score[];
+    private serveOver:boolean;
 
     // Switch posiions.
     private ballAngles:boolean = true;
@@ -37,6 +38,7 @@ class AbstractGame extends Phaser.State {
      * @memberOf AbstractGame
      */
     create(): void {
+        // Create sound effect instances.
         this.sndWall = this.add.audio("short");
         this.sndBat = this.add.audio("medium");
         this.sndScore = this.add.audio("long");
@@ -46,6 +48,11 @@ class AbstractGame extends Phaser.State {
         // The top and bottom lines everything has.
         this.addDashedWall(ObjectPos.Top);        
         this.addDashedWall(ObjectPos.Bottom);
+        // Score objects.
+        this.score = [];
+        var s:number = 64;
+        this.score.push(new Score(this.game,this.game.width/2-s*7/4,s*5/4,s,s*4/3));
+        this.score.push(new Score(this.game,this.game.width/2+s*7/4,s*5/4,s,s*4/3));
         // Create wall bits relevant to the actual game.
         this.createGameArea();
         // Create a new ball to play with.
@@ -61,6 +68,7 @@ class AbstractGame extends Phaser.State {
         this.ball = null;
         this.wallGroup = null;
         this.batGroup = null;
+        this.score = null;
     }
 
     update(): void {
@@ -69,6 +77,36 @@ class AbstractGame extends Phaser.State {
                                                 (b,w) => { this.sndWall.play(); });
         // For hitting a bat, we work out the new angle (depends where the ball hit the bat)                                                
         this.game.physics.arcade.overlap(this.ball,this.batGroup,this.ballBatHandler,null,this);
+
+        // If off the screen and in play (e.g. serve not over)
+        if ((this.ball.x < 0 || this.ball.x > this.game.width) && (!this.serveOver)) {
+            // Play scoring soud.
+            this.sndScore.play();
+            // Update score getWinner() is overridable. 
+            var s:Score = this.score[this.getWinner()];
+            var n:number = s.getValue() + 1;
+            s.setValue(n);
+            // Note : AY-3-8500 the winner serves, not the loser.
+            var serveSide:ObjectPos = this.ball.x < 0 ? ObjectPos.Right:ObjectPos.Left;
+            // Stop this off screen code being re-called and hide it.
+            this.serveOver = true;
+            // At 15 game over, effectively stop.
+            if (n < 15) {
+                this.game.time.events.add(1000,() => { this.serve(serveSide); })                
+            }
+        }
+    }
+
+    /**
+     * Get the winner dependent on the ball state. For most games this depends whether 
+     * ball is off left or right, but for Squash types it depends whose turn it is.
+     * 
+     * @returns {number} 0 left score/player 1 right score/player.
+     * 
+     * @memberOf AbstractGame
+     */
+    getWinner() : number {
+        return (this.ball.x < 0) ? 1 : 0;
     }
 
     /**
@@ -89,6 +127,8 @@ class AbstractGame extends Phaser.State {
         var angle = this.rnd.between(1,2) * 20
         if (this.rnd.between(0,1) != 0) { angle = -angle; }
         if (side == ObjectPos.Right) { angle = 180-angle; }
+        // Ball in play again
+        this.serveOver = false;
         // And go !
         this.ball.launch(angle);
     }
@@ -190,7 +230,7 @@ class AbstractGame extends Phaser.State {
         var batHeight:number = this.game.height / (this.batSize ? 10 : 5);
         var r:Bat = new Bat(this.game,xPercent,direction,batHeight);
         r.setController(direction == ObjectPos.Left ? new KeyboardController(this.game,this.ball,r) : 
-                                                      new AIController(this.ball,r));
+                                                      new SimpleAIController(this.ball,r));
 
         this.game.physics.arcade.enableBody(r);
         this.batGroup.add(r);

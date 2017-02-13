@@ -27,6 +27,14 @@ class Ball extends WhiteRect {
         this.velocity = velocity;
     }
 
+
+    /**
+     * Fire the ball in a specific direction
+     * 
+     * @param {number} angle to fire where 0 = east/left.
+     * 
+     * @memberOf Ball
+     */
     launch(angle:number) : void {
         // Convert to radians.
         angle = angle / 360.0 * 2 * Math.PI;

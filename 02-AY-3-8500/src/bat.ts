@@ -65,7 +65,10 @@ class Bat extends WhiteRect {
      * @memberOf Bat
      */
     update() : void {
-        this.y = this.y + this.controller.getMovement() * 10;
+        // Get move and scale for time elapsed - 1 second for top to bottom
+        this.y = this.y + this.controller.getMovement() * 
+                                    this.game.time.elapsed / 1000.0 * this.game.height;
+        // Force in range.
         this.y = Math.max(this.y,this.batHeight/2);
         this.y = Math.min(this.y,this.game.height-this.batHeight/2);
     }

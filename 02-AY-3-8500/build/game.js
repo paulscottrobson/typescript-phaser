@@ -59,6 +59,10 @@ var AbstractGame = (function (_super) {
         this.batGroup = new Phaser.Group(this.game);
         this.addDashedWall(ObjectPos.Top);
         this.addDashedWall(ObjectPos.Bottom);
+        this.score = [];
+        var s = 64;
+        this.score.push(new Score(this.game, this.game.width / 2 - s * 7 / 4, s * 5 / 4, s, s * 4 / 3));
+        this.score.push(new Score(this.game, this.game.width / 2 + s * 7 / 4, s * 5 / 4, s, s * 4 / 3));
         this.createGameArea();
         this.ball = new Ball(this.game, this.ballSpeed ? this.game.width : this.game.width / 2);
         this.ballNumber = 0;
@@ -69,11 +73,26 @@ var AbstractGame = (function (_super) {
         this.ball = null;
         this.wallGroup = null;
         this.batGroup = null;
+        this.score = null;
     };
     AbstractGame.prototype.update = function () {
         var _this = this;
         this.game.physics.arcade.collide(this.ball, this.wallGroup, function (b, w) { _this.sndWall.play(); });
         this.game.physics.arcade.overlap(this.ball, this.batGroup, this.ballBatHandler, null, this);
+        if ((this.ball.x < 0 || this.ball.x > this.game.width) && (!this.serveOver)) {
+            this.sndScore.play();
+            var s = this.score[this.getWinner()];
+            var n = s.getValue() + 1;
+            s.setValue(n);
+            var serveSide = this.ball.x < 0 ? ObjectPos.Right : ObjectPos.Left;
+            this.serveOver = true;
+            if (n < 15) {
+                this.game.time.events.add(1000, function () { _this.serve(serveSide); });
+            }
+        }
+    };
+    AbstractGame.prototype.getWinner = function () {
+        return (this.ball.x < 0) ? 1 : 0;
     };
     AbstractGame.prototype.serve = function (side) {
         this.ballNumber++;
@@ -86,6 +105,7 @@ var AbstractGame = (function (_super) {
         if (side == ObjectPos.Right) {
             angle = 180 - angle;
         }
+        this.serveOver = false;
         this.ball.launch(angle);
     };
     AbstractGame.prototype.ballBatHandler = function (ball, bat) {
@@ -123,7 +143,7 @@ var AbstractGame = (function (_super) {
         var batHeight = this.game.height / (this.batSize ? 10 : 5);
         var r = new Bat(this.game, xPercent, direction, batHeight);
         r.setController(direction == ObjectPos.Left ? new KeyboardController(this.game, this.ball, r) :
-            new AIController(this.ball, r));
+            new SimpleAIController(this.ball, r));
         this.game.physics.arcade.enableBody(r);
         this.batGroup.add(r);
     };
@@ -213,7 +233,8 @@ var Bat = (function (_super) {
         this.controller = controller;
     };
     Bat.prototype.update = function () {
-        this.y = this.y + this.controller.getMovement() * 10;
+        this.y = this.y + this.controller.getMovement() *
+            this.game.time.elapsed / 1000.0 * this.game.height;
         this.y = Math.max(this.y, this.batHeight / 2);
         this.y = Math.min(this.y, this.game.height - this.batHeight / 2);
     };
@@ -278,12 +299,12 @@ var KeyboardController = (function (_super) {
 }(Controller));
 KeyboardController.cursors = null;
 KeyboardController.instanceCount = 0;
-var AIController = (function (_super) {
-    __extends(AIController, _super);
-    function AIController() {
+var SimpleAIController = (function (_super) {
+    __extends(SimpleAIController, _super);
+    function SimpleAIController() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
-    AIController.prototype.getMovement = function () {
+    SimpleAIController.prototype.getMovement = function () {
         var move = 0;
         if (this.ball.y > this.bat.y) {
             move = 1;
@@ -293,7 +314,7 @@ var AIController = (function (_super) {
         }
         return move;
     };
-    return AIController;
+    return SimpleAIController;
 }(Controller));
 window.onload = function () {
     var game = new PongGame();
@@ -303,7 +324,7 @@ var PongGame = (function (_super) {
     function PongGame() {
         var _this = _super.call(this, 960, 640, Phaser.AUTO, "") || this;
         _this.state.add("Preload", new PreloadState());
-        _this.state.add("DemoGame", new TennisGame());
+        _this.state.add("DemoGame", new SoccerGame());
         _this.state.add("Dead", new Phaser.State());
         _this.state.start("Preload");
         return _this;
@@ -331,3 +352,30 @@ var PreloadState = (function (_super) {
     };
     return PreloadState;
 }(Phaser.State));
+var Score = (function (_super) {
+    __extends(Score, _super);
+    function Score(game, x, y, w, h) {
+        var _this = _super.call(this, game) || this;
+        _this.position.setTo(x, y);
+        game.add.existing(_this);
+        for (var digit = 0; digit < 2; digit++) {
+            var s = new Phaser.Sprite(game, 0, 0, (digit + 8).toString());
+            s.anchor.setTo(0.5, 0.5);
+            s.x = ((digit == 0) ? -1 : 1) * w * 0.6;
+            s.height = h;
+            s.width = w;
+            _this.add(s, true, digit);
+        }
+        _this.setValue(0);
+        return _this;
+    }
+    Score.prototype.getValue = function () { return this.value; };
+    Score.prototype.setValue = function (n) {
+        var s = this.children[0];
+        s.visible = (n >= 10);
+        s.loadTexture(Math.floor(n / 10).toString());
+        this.children[1].loadTexture((n % 10).toString());
+        this.value = n;
+    };
+    return Score;
+}(Phaser.Group));
