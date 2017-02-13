@@ -31,10 +31,19 @@ class PongGame extends Phaser.Game {
  */
 class PreloadState extends Phaser.State {
     preload(): void {
-        //this.game.load.image("block","assets/sprites/block.png");
+        // Make the game window fit the display area. Doesn't work in the Game constructor.
+        this.game.scale.pageAlignHorizontally = true;
+        this.game.scale.pageAlignVertically = true;
+        this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;        
+        // Load SFX
         for (var sound of ["short","medium","long"]) {
-            this.game.load.audio("short",["assets/sounds/"+sound+".mp3","assets/sounds/"+sound+".ogg"]);
+            this.game.load.audio(sound,["assets/sounds/"+sound+".mp3","assets/sounds/"+sound+".ogg"]);
         }
+        // Load Score Images
+        for (var n:number = 0;n <= 9;n++) {
+            this.game.load.image(n.toString(),"assets/sprites/"+n.toString()+".png");
+        }
+        // Switch at end.
         this.game.load.onLoadComplete.add(() => { this.game.state.start("DemoGame"); },this);
     }    
 }

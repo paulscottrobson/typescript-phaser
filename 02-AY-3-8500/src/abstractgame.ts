@@ -16,11 +16,28 @@ class AbstractGame extends Phaser.State {
     private batGroup:Phaser.Group;
     private ball:Ball;
 
+    // Switch posiions.
+    private ballAngles:boolean = true;
+    private batSize:boolean = false;
+    private ballSpeed:boolean = false;
+
     private static WALL_WIDTH:number = 8;
     private static WALL_HEIGHT:number = 8;
     private static GOAL_PERCENT:number = 55;
 
+    private sndWall:Phaser.Sound;
+    private sndBat:Phaser.Sound;
+    private sndScore:Phaser.Sound;
+    
+    /**
+     * Create game space
+     * 
+     * @memberOf AbstractGame
+     */
     create(): void {
+        this.sndWall = this.add.audio("short");
+        this.sndBat = this.add.audio("medium");
+        this.sndScore = this.add.audio("long");
         // Groups for the solid wall objects and the bats.
         this.wallGroup = new Phaser.Group(this.game);
         this.batGroup = new Phaser.Group(this.game);
@@ -30,24 +47,38 @@ class AbstractGame extends Phaser.State {
         // Create wall bits relevant to the actual game.
         this.createGameArea();
         // Create a new ball to play with.
-        this.ball = new Ball(this.game);
+        this.ball = new Ball(this.game,this.ballSpeed ? this.game.width : this.game.width / 2);
         // Create the players
         this.createPlayers();
     }
 
     destroy(): void {
         this.wallGroup = null;
+        this.batGroup = null;
     }
 
     update(): void {
-        this.game.physics.arcade.collide(this.ball,this.wallGroup);
+        // For hitting the wall the physics does the work.
+        this.game.physics.arcade.collide(this.ball,this.wallGroup,
+                                                (b,w) => { this.sndWall.play(); });
+        // For hitting a bat, we work out the new angle (depends where the ball hit the bat)                                                
+        this.game.physics.arcade.overlap(this.ball,this.batGroup,this.ballBatHandler,null,this);
     }
 
-    createGameArea(): void {
-        console.log("Calling abstract method createGameArea()");
-    }
-    createPlayers(): void {
-        console.log("Calling abstract method createPlayers()");
+    /**
+     * Handle bat/ball collision.
+     * 
+     * @param {Ball} ball   Ball 
+     * @param {Bat} bat Bat
+     * 
+     * @memberOf AbstractGame
+     */
+    ballBatHandler(ball:Ball,bat:Bat) : void {
+        // Work out which way to fire the ball
+        var angle = bat.getBounceAngle(ball.y,this.ballAngles); 
+        // And fire it.
+        ball.launch(angle);
+        this.sndBat.play();
     }
 
     /**
@@ -81,7 +112,7 @@ class AbstractGame extends Phaser.State {
         this.addWall(this.game.width/2-AbstractGame.WALL_WIDTH/2,
                                     0,AbstractGame.WALL_WIDTH,this.game.height,true,false);
     }
-
+    
     /**
      * Add a horizontal dashed wall
      * 
@@ -116,18 +147,45 @@ class AbstractGame extends Phaser.State {
             this.wallGroup.add(r);
         }
     }
-}
 
+    
+    /**
+     * Add a bat.
+     * 
+     * @protected
+     * @param {ObjectPos} direction     playing left or right
+     * @param {number} xPercent         percent across the screen from own 'goal line'.
+     * 
+     * @memberOf AbstractGame
+     */
+    protected addBat(direction:ObjectPos,xPercent:number) {
+        var batHeight:number = this.game.height / (this.batSize ? 10 : 5);
+        var r:Bat = new Bat(this.game,xPercent,direction,batHeight);
+        this.game.physics.arcade.enableBody(r);
+        this.batGroup.add(r);
+    }
+
+    createGameArea(): void {
+        console.log("Calling abstract method createGameArea()");
+    }
+    createPlayers(): void {
+        console.log("Calling abstract method createPlayers()");
+    }
+
+}
 
 class SoccerGame extends AbstractGame {
 
     createGameArea() : void {
         this.centreLine();
-        this.backWall(ObjectPos.Left,true);
-        this.backWall(ObjectPos.Right,true);        
+        this.backWall(ObjectPos.Left,false);
+        this.backWall(ObjectPos.Right,false);        
     }
 
     createPlayers(): void {
-
+        this.addBat(ObjectPos.Left,5);
+        this.addBat(ObjectPos.Left,75);
+        this.addBat(ObjectPos.Right,5);
+        this.addBat(ObjectPos.Right,75);
     }
 }

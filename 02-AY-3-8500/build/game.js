@@ -45,28 +45,37 @@ var ObjectPos;
 var AbstractGame = (function (_super) {
     __extends(AbstractGame, _super);
     function AbstractGame() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.ballAngles = true;
+        _this.batSize = false;
+        _this.ballSpeed = false;
+        return _this;
     }
     AbstractGame.prototype.create = function () {
+        this.sndWall = this.add.audio("short");
+        this.sndBat = this.add.audio("medium");
+        this.sndScore = this.add.audio("long");
         this.wallGroup = new Phaser.Group(this.game);
         this.batGroup = new Phaser.Group(this.game);
         this.addDashedWall(ObjectPos.Top);
         this.addDashedWall(ObjectPos.Bottom);
         this.createGameArea();
-        this.ball = new Ball(this.game);
+        this.ball = new Ball(this.game, this.ballSpeed ? this.game.width : this.game.width / 2);
         this.createPlayers();
     };
     AbstractGame.prototype.destroy = function () {
         this.wallGroup = null;
+        this.batGroup = null;
     };
     AbstractGame.prototype.update = function () {
-        this.game.physics.arcade.collide(this.ball, this.wallGroup);
+        var _this = this;
+        this.game.physics.arcade.collide(this.ball, this.wallGroup, function (b, w) { _this.sndWall.play(); });
+        this.game.physics.arcade.overlap(this.ball, this.batGroup, this.ballBatHandler, null, this);
     };
-    AbstractGame.prototype.createGameArea = function () {
-        console.log("Calling abstract method createGameArea()");
-    };
-    AbstractGame.prototype.createPlayers = function () {
-        console.log("Calling abstract method createPlayers()");
+    AbstractGame.prototype.ballBatHandler = function (ball, bat) {
+        var angle = bat.getBounceAngle(ball.y, this.ballAngles);
+        ball.launch(angle);
+        this.sndBat.play();
     };
     AbstractGame.prototype.backWall = function (pos, hasGoal) {
         var x = (pos == ObjectPos.Left) ? 0 : this.game.width - AbstractGame.WALL_WIDTH;
@@ -94,6 +103,18 @@ var AbstractGame = (function (_super) {
             this.wallGroup.add(r);
         }
     };
+    AbstractGame.prototype.addBat = function (direction, xPercent) {
+        var batHeight = this.game.height / (this.batSize ? 10 : 5);
+        var r = new Bat(this.game, xPercent, direction, batHeight);
+        this.game.physics.arcade.enableBody(r);
+        this.batGroup.add(r);
+    };
+    AbstractGame.prototype.createGameArea = function () {
+        console.log("Calling abstract method createGameArea()");
+    };
+    AbstractGame.prototype.createPlayers = function () {
+        console.log("Calling abstract method createPlayers()");
+    };
     return AbstractGame;
 }(Phaser.State));
 AbstractGame.WALL_WIDTH = 8;
@@ -106,26 +127,68 @@ var SoccerGame = (function (_super) {
     }
     SoccerGame.prototype.createGameArea = function () {
         this.centreLine();
-        this.backWall(ObjectPos.Left, true);
-        this.backWall(ObjectPos.Right, true);
+        this.backWall(ObjectPos.Left, false);
+        this.backWall(ObjectPos.Right, false);
     };
     SoccerGame.prototype.createPlayers = function () {
+        this.addBat(ObjectPos.Left, 5);
+        this.addBat(ObjectPos.Left, 75);
+        this.addBat(ObjectPos.Right, 5);
+        this.addBat(ObjectPos.Right, 75);
     };
     return SoccerGame;
 }(AbstractGame));
 var Ball = (function (_super) {
     __extends(Ball, _super);
-    function Ball(game) {
+    function Ball(game, velocity) {
         var _this = _super.call(this, game, game.width / 2, game.height / 2, Ball.BALL_SIZE, Ball.BALL_SIZE, false) || this;
         game.physics.arcade.enableBody(_this);
         _this.body.bounce.set(1, 1);
-        _this.body.velocity.setTo(500, 300);
         _this.anchor.set(0.5, 0.5);
+        _this.velocity = velocity;
+        _this.launch(40);
         return _this;
     }
+    Ball.prototype.launch = function (angle) {
+        angle = angle / 360.0 * 2 * Math.PI;
+        this.body.velocity.x = Math.cos(angle) * this.velocity;
+        this.body.velocity.y = -Math.sin(angle) * this.velocity;
+    };
     return Ball;
 }(WhiteRect));
 Ball.BALL_SIZE = 24;
+var Bat = (function (_super) {
+    __extends(Bat, _super);
+    function Bat(game, xPercent, direction, height) {
+        var _this = this;
+        if (direction == ObjectPos.Left) {
+            xPercent = 100 - xPercent;
+        }
+        var x = game.width * xPercent / 100;
+        var y = game.rnd.between(height, game.height - height);
+        _this = _super.call(this, game, x, y, Bat.BAT_WIDTH, height, false) || this;
+        _this.anchor.setTo(0.5, 0.5);
+        _this.direction = direction;
+        _this.batHeight = height;
+        return _this;
+    }
+    Bat.prototype.getBounceAngle = function (yBall, isFourBounce) {
+        var offset = Math.abs((yBall - this.y) / (this.batHeight / 2));
+        var angle = 40;
+        if (isFourBounce && offset < 0.5) {
+            angle = 20;
+        }
+        if (yBall > this.y) {
+            angle = -angle;
+        }
+        if (this.direction == ObjectPos.Left) {
+            angle = 180 - angle;
+        }
+        return angle;
+    };
+    return Bat;
+}(WhiteRect));
+Bat.BAT_WIDTH = 16;
 window.onload = function () {
     var game = new PongGame();
 };
@@ -148,9 +211,15 @@ var PreloadState = (function (_super) {
     }
     PreloadState.prototype.preload = function () {
         var _this = this;
+        this.game.scale.pageAlignHorizontally = true;
+        this.game.scale.pageAlignVertically = true;
+        this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         for (var _i = 0, _a = ["short", "medium", "long"]; _i < _a.length; _i++) {
             var sound = _a[_i];
-            this.game.load.audio("short", ["assets/sounds/" + sound + ".mp3", "assets/sounds/" + sound + ".ogg"]);
+            this.game.load.audio(sound, ["assets/sounds/" + sound + ".mp3", "assets/sounds/" + sound + ".ogg"]);
+        }
+        for (var n = 0; n <= 9; n++) {
+            this.game.load.image(n.toString(), "assets/sprites/" + n.toString() + ".png");
         }
         this.game.load.onLoadComplete.add(function () { _this.game.state.start("DemoGame"); }, this);
     };
