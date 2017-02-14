@@ -245,7 +245,7 @@ class AbstractGame extends Phaser.State {
         var batHeight:number = this.game.height / (this.batSize ? 10 : 5);
         var r:Bat = new Bat(this.game,xPercent,direction,batHeight);
         r.setController(!useAI ? new KeyboardController(this.game,this.ball,r) : 
-                                 new SimpleAIController(this.ball,r));
+                                 new AIController(this.game,this.ball,r));
 
         this.game.physics.arcade.enableBody(r);
         this.batGroup.add(r);

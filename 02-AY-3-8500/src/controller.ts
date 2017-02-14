@@ -1,6 +1,5 @@
 /// <reference path="../lib/phaser.comments.d.ts"/>
 
-
 /**
  * Controllers control a bat. All are derived from this 
  * 
@@ -9,7 +8,6 @@
 class Controller {
     protected ball:Ball;
     protected bat:Bat;
-
 
     /**
      * Creates an instance of Controller.
@@ -101,4 +99,38 @@ class SimpleAIController extends Controller {
         if (this.ball.y < this.bat.y) { move = -1; }
         return move;
     }
+}
+
+/**
+ * This is a controller which chases the ball, but updates periodically rather than
+ * chasing perpetually.
+ * 
+ * @class AIController
+ * @extends {Controller}
+ */
+class AIController extends Controller {
+    private currentMove:number = 0;
+    private game:Phaser.Game;
+
+    constructor(game:Phaser.Game,ball:Ball,bat:Bat) {
+        super(ball,bat);
+        this.game = game;
+        this.rethink();
+    }
+
+    /**
+     * Method fired every 100-300ms and re-thinks the bat move direction each call.
+     * 
+     * 
+     * @memberOf AIController
+     */
+    rethink() : void {
+        this.currentMove = 0;
+        if (this.ball.x >= 0 && this.ball.x < this.game.width) {
+            this.currentMove = (this.ball.y > this.bat.y) ? 1 : -1;
+        }
+        this.game.time.events.add(this.game.rnd.between(100,300),this.rethink,this);
+    }
+
+    getMovement(): number { return this.currentMove; } 
 }

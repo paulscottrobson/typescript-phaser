@@ -149,7 +149,7 @@ var AbstractGame = (function (_super) {
         var batHeight = this.game.height / (this.batSize ? 10 : 5);
         var r = new Bat(this.game, xPercent, direction, batHeight);
         r.setController(!useAI ? new KeyboardController(this.game, this.ball, r) :
-            new SimpleAIController(this.ball, r));
+            new AIController(this.game, this.ball, r));
         this.game.physics.arcade.enableBody(r);
         this.batGroup.add(r);
     };
@@ -289,6 +289,25 @@ var SimpleAIController = (function (_super) {
         return move;
     };
     return SimpleAIController;
+}(Controller));
+var AIController = (function (_super) {
+    __extends(AIController, _super);
+    function AIController(game, ball, bat) {
+        var _this = _super.call(this, ball, bat) || this;
+        _this.currentMove = 0;
+        _this.game = game;
+        _this.rethink();
+        return _this;
+    }
+    AIController.prototype.rethink = function () {
+        this.currentMove = 0;
+        if (this.ball.x >= 0 && this.ball.x < this.game.width) {
+            this.currentMove = (this.ball.y > this.bat.y) ? 1 : -1;
+        }
+        this.game.time.events.add(this.game.rnd.between(100, 300), this.rethink, this);
+    };
+    AIController.prototype.getMovement = function () { return this.currentMove; };
+    return AIController;
 }(Controller));
 var SquashGame = (function (_super) {
     __extends(SquashGame, _super);
