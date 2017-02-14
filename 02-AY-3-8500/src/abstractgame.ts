@@ -13,7 +13,7 @@ enum ObjectPos { Left,Right,Top,Bottom,Middle };
 class AbstractGame extends Phaser.State {
 
     private wallGroup:Phaser.Group;
-    private batGroup:Phaser.Group;
+    protected batGroup:Phaser.Group;
     protected ball:Ball;
     protected ballNumber:number;
     private score:Score[];
@@ -62,6 +62,21 @@ class AbstractGame extends Phaser.State {
         this.createPlayers();
         // And start the game. Randomly pick left or right hand side.
         this.serve(this.rnd.between(0,1) ? ObjectPos.Left : ObjectPos.Right);
+        // Create accessor for the parent game as a PongGame object so we can access methods.
+        var game:PongGame = <PongGame>this.game;
+        // Set up keyboard functionality.  Space changes game. B bat. A angles. S speed.
+        this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).onDown.add(
+            () => { (game).nextGame(); },
+        game);
+        this.game.input.keyboard.addKey(Phaser.Keyboard.B).onDown.add(
+            () => { this.batSize = !this.batSize; (game).restartGame(); },
+        game);
+        this.game.input.keyboard.addKey(Phaser.Keyboard.A).onDown.add(
+            () => { this.ballAngles = !this.ballAngles; (game).restartGame(); },
+        game);
+        this.game.input.keyboard.addKey(Phaser.Keyboard.S).onDown.add(
+            () => { this.ballSpeed = !this.ballSpeed; (game).restartGame(); },
+        game);
     }
 
     destroy(): void {
@@ -223,14 +238,14 @@ class AbstractGame extends Phaser.State {
      * @protected
      * @param {ObjectPos} direction     playing left or right
      * @param {number} xPercent         percent across the screen from own 'goal line'.
-     * 
+     * @param {boolean} useAI           use AI player.
      * @memberOf AbstractGame
      */
-    protected addBat(direction:ObjectPos,xPercent:number) {
+    protected addBat(direction:ObjectPos,xPercent:number,useAI:boolean) {
         var batHeight:number = this.game.height / (this.batSize ? 10 : 5);
         var r:Bat = new Bat(this.game,xPercent,direction,batHeight);
-        r.setController(direction == ObjectPos.Left ? new KeyboardController(this.game,this.ball,r) : 
-                                                      new SimpleAIController(this.ball,r));
+        r.setController(!useAI ? new KeyboardController(this.game,this.ball,r) : 
+                                 new SimpleAIController(this.ball,r));
 
         this.game.physics.arcade.enableBody(r);
         this.batGroup.add(r);
@@ -245,30 +260,3 @@ class AbstractGame extends Phaser.State {
 
 }
 
-class SoccerGame extends AbstractGame {
-
-    createGameArea() : void {
-        this.centreLine();
-        this.backWall(ObjectPos.Left,true);
-        this.backWall(ObjectPos.Right,true);        
-    }
-
-    createPlayers(): void {
-        this.addBat(ObjectPos.Left,5);
-        this.addBat(ObjectPos.Left,70);
-        this.addBat(ObjectPos.Right,5);
-        this.addBat(ObjectPos.Right,75);
-    }
-}
-
-class TennisGame extends AbstractGame {
-
-    createGameArea() : void {
-        this.centreLine();
-    }
-
-    createPlayers(): void {
-        this.addBat(ObjectPos.Left,5);
-        this.addBat(ObjectPos.Right,5);
-    }
-}

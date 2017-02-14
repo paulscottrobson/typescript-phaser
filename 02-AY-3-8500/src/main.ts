@@ -13,14 +13,27 @@ window.onload = function() {
  * @extends {Phaser.Game}
  */
 class PongGame extends Phaser.Game {
+    private currentGame:number;
+
     constructor() {
         // Call the super constructor.
         super(960,640,Phaser.AUTO,"");
         // Create a new state and switch to it.
         this.state.add("Preload", new PreloadState());
-        this.state.add("DemoGame",new SoccerGame());
-        this.state.add("Dead",new Phaser.State());
+        this.state.add("0",new TennisGame());
+        this.state.add("1",new SoccerGame());
+        this.state.add("2",new SquashGame());
+        this.state.add("3",new PracticeGame());
+        this.currentGame = 0;
         this.state.start("Preload");
+    }
+
+    nextGame(): void {
+        this.currentGame = (this.currentGame+1) % 4;
+        this.state.start(this.currentGame.toString());
+    }
+    restartGame() : void {
+        this.state.start(this.currentGame.toString());        
     }
 }
 
@@ -44,6 +57,6 @@ class PreloadState extends Phaser.State {
             this.game.load.image(n.toString(),"assets/sprites/"+n.toString()+".png");
         }
         // Switch at end.
-        this.game.load.onLoadComplete.add(() => { this.game.state.start("DemoGame"); },this);
+        this.game.load.onLoadComplete.add(() => { this.game.state.start("0"); },this);
     }    
 }

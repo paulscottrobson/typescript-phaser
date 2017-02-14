@@ -52,6 +52,7 @@ var AbstractGame = (function (_super) {
         return _this;
     }
     AbstractGame.prototype.create = function () {
+        var _this = this;
         this.sndWall = this.add.audio("short");
         this.sndBat = this.add.audio("medium");
         this.sndScore = this.add.audio("long");
@@ -68,6 +69,11 @@ var AbstractGame = (function (_super) {
         this.ballNumber = 0;
         this.createPlayers();
         this.serve(this.rnd.between(0, 1) ? ObjectPos.Left : ObjectPos.Right);
+        var game = this.game;
+        this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).onDown.add(function () { (game).nextGame(); }, game);
+        this.game.input.keyboard.addKey(Phaser.Keyboard.B).onDown.add(function () { _this.batSize = !_this.batSize; (game).restartGame(); }, game);
+        this.game.input.keyboard.addKey(Phaser.Keyboard.A).onDown.add(function () { _this.ballAngles = !_this.ballAngles; (game).restartGame(); }, game);
+        this.game.input.keyboard.addKey(Phaser.Keyboard.S).onDown.add(function () { _this.ballSpeed = !_this.ballSpeed; (game).restartGame(); }, game);
     };
     AbstractGame.prototype.destroy = function () {
         this.ball = null;
@@ -139,10 +145,10 @@ var AbstractGame = (function (_super) {
             this.wallGroup.add(r);
         }
     };
-    AbstractGame.prototype.addBat = function (direction, xPercent) {
+    AbstractGame.prototype.addBat = function (direction, xPercent, useAI) {
         var batHeight = this.game.height / (this.batSize ? 10 : 5);
         var r = new Bat(this.game, xPercent, direction, batHeight);
-        r.setController(direction == ObjectPos.Left ? new KeyboardController(this.game, this.ball, r) :
+        r.setController(!useAI ? new KeyboardController(this.game, this.ball, r) :
             new SimpleAIController(this.ball, r));
         this.game.physics.arcade.enableBody(r);
         this.batGroup.add(r);
@@ -158,38 +164,6 @@ var AbstractGame = (function (_super) {
 AbstractGame.WALL_WIDTH = 8;
 AbstractGame.WALL_HEIGHT = 8;
 AbstractGame.GOAL_PERCENT = 55;
-var SoccerGame = (function (_super) {
-    __extends(SoccerGame, _super);
-    function SoccerGame() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    SoccerGame.prototype.createGameArea = function () {
-        this.centreLine();
-        this.backWall(ObjectPos.Left, true);
-        this.backWall(ObjectPos.Right, true);
-    };
-    SoccerGame.prototype.createPlayers = function () {
-        this.addBat(ObjectPos.Left, 5);
-        this.addBat(ObjectPos.Left, 70);
-        this.addBat(ObjectPos.Right, 5);
-        this.addBat(ObjectPos.Right, 75);
-    };
-    return SoccerGame;
-}(AbstractGame));
-var TennisGame = (function (_super) {
-    __extends(TennisGame, _super);
-    function TennisGame() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    TennisGame.prototype.createGameArea = function () {
-        this.centreLine();
-    };
-    TennisGame.prototype.createPlayers = function () {
-        this.addBat(ObjectPos.Left, 5);
-        this.addBat(ObjectPos.Right, 5);
-    };
-    return TennisGame;
-}(AbstractGame));
 var Ball = (function (_super) {
     __extends(Ball, _super);
     function Ball(game, velocity) {
@@ -316,6 +290,89 @@ var SimpleAIController = (function (_super) {
     };
     return SimpleAIController;
 }(Controller));
+var SquashGame = (function (_super) {
+    __extends(SquashGame, _super);
+    function SquashGame() {
+        var _this = _super.call(this) || this;
+        _this.inPlay = 0;
+        return _this;
+    }
+    SquashGame.prototype.createGameArea = function () {
+        this.backWall(ObjectPos.Left, false);
+    };
+    SquashGame.prototype.createPlayers = function () {
+        this.addBat(ObjectPos.Left, 20, true);
+        this.addBat(ObjectPos.Left, 16, false);
+    };
+    SquashGame.prototype.serve = function (side) {
+        _super.prototype.serve.call(this, ObjectPos.Right);
+        this.ball.x = this.game.width * 75 / 100;
+    };
+    SquashGame.prototype.ballBatHandler = function (ball, bat) {
+        if (ball.body.velocity.x > 0) {
+            if (this.batGroup.children[this.inPlay] == bat) {
+                _super.prototype.ballBatHandler.call(this, ball, bat);
+                this.inPlay = 1 - this.inPlay;
+            }
+        }
+    };
+    SquashGame.prototype.getWinner = function () {
+        return 1 - this.inPlay;
+    };
+    return SquashGame;
+}(AbstractGame));
+var PracticeGame = (function (_super) {
+    __extends(PracticeGame, _super);
+    function PracticeGame() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    PracticeGame.prototype.createGameArea = function () {
+        this.backWall(ObjectPos.Left, false);
+    };
+    PracticeGame.prototype.createPlayers = function () {
+        this.addBat(ObjectPos.Left, 16, false);
+    };
+    PracticeGame.prototype.serve = function (side) {
+        _super.prototype.serve.call(this, ObjectPos.Right);
+        this.ball.x = this.game.width * 75 / 100;
+    };
+    PracticeGame.prototype.getWinner = function () {
+        return 0;
+    };
+    return PracticeGame;
+}(AbstractGame));
+var SoccerGame = (function (_super) {
+    __extends(SoccerGame, _super);
+    function SoccerGame() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    SoccerGame.prototype.createGameArea = function () {
+        this.centreLine();
+        this.backWall(ObjectPos.Left, true);
+        this.backWall(ObjectPos.Right, true);
+    };
+    SoccerGame.prototype.createPlayers = function () {
+        this.addBat(ObjectPos.Left, 5, false);
+        this.addBat(ObjectPos.Left, 70, false);
+        this.addBat(ObjectPos.Right, 5, true);
+        this.addBat(ObjectPos.Right, 75, true);
+    };
+    return SoccerGame;
+}(AbstractGame));
+var TennisGame = (function (_super) {
+    __extends(TennisGame, _super);
+    function TennisGame() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    TennisGame.prototype.createGameArea = function () {
+        this.centreLine();
+    };
+    TennisGame.prototype.createPlayers = function () {
+        this.addBat(ObjectPos.Left, 5, false);
+        this.addBat(ObjectPos.Right, 5, true);
+    };
+    return TennisGame;
+}(AbstractGame));
 window.onload = function () {
     var game = new PongGame();
 };
@@ -324,11 +381,21 @@ var PongGame = (function (_super) {
     function PongGame() {
         var _this = _super.call(this, 960, 640, Phaser.AUTO, "") || this;
         _this.state.add("Preload", new PreloadState());
-        _this.state.add("DemoGame", new SoccerGame());
-        _this.state.add("Dead", new Phaser.State());
+        _this.state.add("0", new TennisGame());
+        _this.state.add("1", new SoccerGame());
+        _this.state.add("2", new SquashGame());
+        _this.state.add("3", new PracticeGame());
+        _this.currentGame = 0;
         _this.state.start("Preload");
         return _this;
     }
+    PongGame.prototype.nextGame = function () {
+        this.currentGame = (this.currentGame + 1) % 4;
+        this.state.start(this.currentGame.toString());
+    };
+    PongGame.prototype.restartGame = function () {
+        this.state.start(this.currentGame.toString());
+    };
     return PongGame;
 }(Phaser.Game));
 var PreloadState = (function (_super) {
@@ -348,7 +415,7 @@ var PreloadState = (function (_super) {
         for (var n = 0; n <= 9; n++) {
             this.game.load.image(n.toString(), "assets/sprites/" + n.toString() + ".png");
         }
-        this.game.load.onLoadComplete.add(function () { _this.game.state.start("DemoGame"); }, this);
+        this.game.load.onLoadComplete.add(function () { _this.game.state.start("0"); }, this);
     };
     return PreloadState;
 }(Phaser.State));
