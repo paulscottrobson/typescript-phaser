@@ -27,12 +27,11 @@ var BaseEnemy = (function (_super) {
         return _this;
     }
     BaseEnemy.prototype.update = function () {
-        var xStart = this.owner.getX() + this.xCell * (BaseEnemy.WIDTH + BaseEnemy.SPACING);
+        var xStart = this.owner.getX() + (this.xCell + 0.5) * (BaseEnemy.WIDTH + BaseEnemy.SPACING);
         var yStart = this.owner.getY() + this.yCell * (BaseEnemy.HEIGHT + BaseEnemy.SPACING);
-        xStart = xStart + ((this.xCell > 0) ? -1 : 1) * (BaseEnemy.WIDTH + BaseEnemy.SPACING) / 2;
         if (this.state == EnemyState.Repositioning) {
             if (Math.abs(this.x - xStart) + Math.abs(this.y - yStart) > 2) {
-                this.game.physics.arcade.moveToXY(this, xStart, yStart);
+                this.game.physics.arcade.moveToXY(this, xStart, yStart, 100);
             }
             else {
                 this.state = EnemyState.InFormation;
@@ -40,6 +39,42 @@ var BaseEnemy = (function (_super) {
         }
         if (this.state == EnemyState.InFormation) {
             this.position.setTo(xStart, yStart);
+            if (xStart < BaseEnemy.WIDTH / 2) {
+                this.owner.setDirection(1);
+            }
+            if (xStart > this.game.width - BaseEnemy.WIDTH / 2) {
+                this.owner.setDirection(-1);
+            }
+        }
+        if (this.state == EnemyState.InFlight) {
+            if (this.x < BaseEnemy.WIDTH / 2) {
+                this.body.velocity.x = Math.abs(this.body.velocity.x);
+            }
+            if (this.x > this.game.width - BaseEnemy.WIDTH / 2) {
+                this.body.velocity.x = -Math.abs(this.body.velocity.x);
+            }
+            if (this.y > this.game.height) {
+                this.x = xStart;
+                this.y = -BaseEnemy.HEIGHT;
+                this.state = EnemyState.Repositioning;
+            }
+        }
+    };
+    BaseEnemy.prototype.attack = function (onLeft) {
+        var _this = this;
+        if (this.state == EnemyState.InFormation) {
+            this.state = EnemyState.InFlight;
+            var newState = { "angle": onLeft ? "-180" : "+180", "y": "-50", "x": onLeft ? "-50" : "+50" };
+            var t = this.game.add.tween(this).to(newState, 500, Phaser.Easing.Linear.None, true);
+            t.onComplete.add(function () {
+                _this.body.velocity.y = 300;
+                _this.body.velocity.x = onLeft ? 300 : -300;
+            }, this);
+        }
+    };
+    BaseEnemy.prototype.attackIf = function (xc, yc, onLeft) {
+        if (this.xCell == xc && this.yCell == yc) {
+            this.attack(onLeft);
         }
     };
     BaseEnemy.prototype.destroy = function () {
@@ -62,6 +97,9 @@ var Alien1 = (function (_super) {
     function Alien1(game, owner, x, y) {
         return _super.call(this, game, owner, x, y, "alien1") || this;
     }
+    Alien1.prototype.getScoreInFormation = function () {
+        return 30;
+    };
     return Alien1;
 }(BaseEnemy));
 var Alien2 = (function (_super) {
@@ -69,6 +107,9 @@ var Alien2 = (function (_super) {
     function Alien2(game, owner, x, y) {
         return _super.call(this, game, owner, x, y, "alien2") || this;
     }
+    Alien2.prototype.getScoreInFormation = function () {
+        return 40;
+    };
     return Alien2;
 }(BaseEnemy));
 var Alien3 = (function (_super) {
@@ -76,6 +117,9 @@ var Alien3 = (function (_super) {
     function Alien3(game, owner, x, y) {
         return _super.call(this, game, owner, x, y, "alien3") || this;
     }
+    Alien3.prototype.getScoreInFormation = function () {
+        return 50;
+    };
     return Alien3;
 }(BaseEnemy));
 var Alien4 = (function (_super) {
@@ -83,6 +127,12 @@ var Alien4 = (function (_super) {
     function Alien4(game, owner, x, y) {
         return _super.call(this, game, owner, x, y, "alien4") || this;
     }
+    Alien4.prototype.getScoreInFormation = function () {
+        return 60;
+    };
+    Alien4.prototype.getScoreInFlight = function () {
+        return 300;
+    };
     return Alien4;
 }(BaseEnemy));
 window.onload = function () {
@@ -137,34 +187,62 @@ var WaveManager = (function (_super) {
         _this.position.setTo(x, y);
         _this.anchor.setTo(0.5, 0.5);
         _this.enemies = new Phaser.Group(game);
+        _this.direction = 1;
         _this.createWave();
+        game.time.events.add(200, _this.launch, _this);
         return _this;
     }
+    WaveManager.prototype.update = function () {
+        this.x += this.direction * WaveManager.VELOCITY * this.game.time.elapsed / 1000;
+        if (this.x < 0) {
+            this.direction = 1;
+        }
+        if (this.x > this.game.width) {
+            this.direction = -1;
+        }
+    };
+    WaveManager.prototype.setDirection = function (newDir) {
+        this.direction = newDir;
+    };
     WaveManager.prototype.destroy = function () {
         _super.prototype.destroy.call(this);
         this.enemies = null;
     };
+    WaveManager.prototype.launch = function () {
+        if (this.enemies.children.length > 0) {
+            var n = this.game.rnd.between(0, this.enemies.children.length - 1);
+            var xLaunch = this.enemies.children[n].xCell;
+            var yLaunch = this.enemies.children[n].yCell;
+            var onLeft = (xLaunch < 0);
+            this.enemies.children[n].attack(onLeft);
+            for (var _i = 0, _a = this.enemies.children; _i < _a.length; _i++) {
+                var enemy = _a[_i];
+                enemy.attackIf(xLaunch - 1, yLaunch + 1, onLeft);
+                enemy.attackIf(xLaunch + 1, yLaunch + 1, onLeft);
+            }
+            this.game.time.events.add(this.game.rnd.between(1500, 6000), this.launch, this);
+        }
+    };
     WaveManager.prototype.createWave = function () {
         this.enemies.add(new Alien4(this.game, this, -2, 0));
-        this.enemies.add(new Alien4(this.game, this, 2, 0));
-        for (var n = -5; n <= 5; n++) {
-            if (n != 0) {
-                if (Math.abs(n) <= 3) {
-                    this.enemies.add(new Alien3(this.game, this, n, 1));
-                }
-                if (Math.abs(n) <= 4) {
-                    this.enemies.add(new Alien2(this.game, this, n, 2));
-                }
-                this.enemies.add(new Alien1(this.game, this, n, 3));
-                this.enemies.add(new Alien1(this.game, this, n, 4));
-                this.enemies.add(new Alien1(this.game, this, n, 5));
-            }
+        this.enemies.add(new Alien4(this.game, this, 1, 0));
+        for (var n = -3; n <= 2; n++) {
+            this.enemies.add(new Alien3(this.game, this, n, 1));
+        }
+        for (var n = -4; n <= 3; n++) {
+            this.enemies.add(new Alien2(this.game, this, n, 2));
+        }
+        for (var n = -5; n <= 4; n++) {
+            this.enemies.add(new Alien1(this.game, this, n, 3));
+            this.enemies.add(new Alien1(this.game, this, n, 4));
+            this.enemies.add(new Alien1(this.game, this, n, 5));
         }
     };
     WaveManager.prototype.getX = function () { return this.x; };
     WaveManager.prototype.getY = function () { return this.y; };
     return WaveManager;
 }(Phaser.Sprite));
+WaveManager.VELOCITY = 20;
 var FlashingStar = (function (_super) {
     __extends(FlashingStar, _super);
     function FlashingStar(game) {
