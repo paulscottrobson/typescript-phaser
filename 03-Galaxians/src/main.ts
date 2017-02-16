@@ -50,6 +50,7 @@ class TestState extends Phaser.State {
     private waveMgr:WaveManager;
     private score:Score;
     private ship:Ship;
+    private lives:Lives;
 
     create() : void {
         var s:Phaser.Sprite;
@@ -60,10 +61,11 @@ class TestState extends Phaser.State {
         this.waveMgr = new WaveManager(this.game,this.game.width/2,120);
         this.score = new Score(this.game);
         this.ship = new Ship(this.game);
+        this.lives = new Lives(this.game);
     }
 
     destroy() {
-        this.waveMgr = this.score = this.ship = null;
+        this.waveMgr = this.score = this.ship = this.lives = null;
     }
 
     update() {
@@ -95,6 +97,10 @@ class TestState extends Phaser.State {
         new Explosion(this.game,enemy.x,enemy.y);
         enemy.destroy();
         missile.destroy();
+        // If destroyed all enemies create a new wave of them.
+        if (this.waveMgr.enemies.children.length == 0) {
+            this.waveMgr.createWave();
+        }
     }
 }
 

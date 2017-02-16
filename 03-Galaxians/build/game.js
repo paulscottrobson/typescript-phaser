@@ -165,6 +165,39 @@ var Explosion = (function (_super) {
     }
     return Explosion;
 }(Phaser.Particles.Arcade.Emitter));
+var Lives = (function (_super) {
+    __extends(Lives, _super);
+    function Lives(game) {
+        var _this = _super.call(this, game) || this;
+        game.add.existing(_this);
+        _this.lives = 0;
+        while (_this.lives < 3) {
+            _this.addLife();
+        }
+        return _this;
+    }
+    Lives.prototype.getLives = function () {
+        return this.lives;
+    };
+    Lives.prototype.addLife = function () {
+        var x = this.lives * 40 + 8;
+        var s = new Phaser.Sprite(this.game, x, this.game.height - 8, "sprites", "lives");
+        s.width = 32;
+        s.height = 40;
+        s.anchor.setTo(0, 1);
+        console.log(s);
+        this.game.add.existing(s);
+        this.add(s, true, this.lives);
+        this.lives++;
+    };
+    Lives.prototype.removeLife = function () {
+        if (this.lives > 0) {
+            this.lives--;
+            this.children[this.lives].destroy();
+        }
+    };
+    return Lives;
+}(Phaser.Group));
 window.onload = function () {
     var game = new GalaxiansGame();
 };
@@ -209,9 +242,10 @@ var TestState = (function (_super) {
         this.waveMgr = new WaveManager(this.game, this.game.width / 2, 120);
         this.score = new Score(this.game);
         this.ship = new Ship(this.game);
+        this.lives = new Lives(this.game);
     };
     TestState.prototype.destroy = function () {
-        this.waveMgr = this.score = this.ship = null;
+        this.waveMgr = this.score = this.ship = this.lives = null;
     };
     TestState.prototype.update = function () {
         this.game.physics.arcade.collide(this.waveMgr.enemies, this.ship.playerMissileGroup, this.shoot, null, this);
@@ -225,6 +259,9 @@ var TestState = (function (_super) {
         new Explosion(this.game, enemy.x, enemy.y);
         enemy.destroy();
         missile.destroy();
+        if (this.waveMgr.enemies.children.length == 0) {
+            this.waveMgr.createWave();
+        }
     };
     return TestState;
 }(Phaser.State));
