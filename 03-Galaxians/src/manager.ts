@@ -4,8 +4,8 @@ class WaveManager extends Phaser.Sprite {
 
     private static VELOCITY:number = 20;
 
-    private enemies:Phaser.Group;
-    private enemyMissiles:Phaser.Group;
+    public enemies:Phaser.Group;
+    public enemyMissiles:Phaser.Group;
     private direction:number;
 
     /**

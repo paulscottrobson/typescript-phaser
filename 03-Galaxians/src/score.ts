@@ -21,6 +21,10 @@ class Score extends Phaser.Group {
         this.updateScore(0);
     }
 
+    addPoints(points:number) : void {
+        this.updateScore(this.score+points);
+    }
+    
     updateScore(score:number) : void {
         this.score = score; 
         var s:string = ("00000"+score.toString()).slice(-6);

@@ -2,6 +2,8 @@
 
 /**
  * Simple missile class, self destructs if off the top/bottom.
+ * These especially and the explosions should be pooled.
+ * Do that next game with lots of things.
  * 
  * @class Missile
  * @extends {Phaser.Sprite}

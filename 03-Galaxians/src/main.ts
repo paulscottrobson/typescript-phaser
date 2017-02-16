@@ -46,14 +46,55 @@ class PreloadState extends Phaser.State {
 }
 
 class TestState extends Phaser.State {
+
+    private waveMgr:WaveManager;
+    private score:Score;
+    private ship:Ship;
+
     create() : void {
         var s:Phaser.Sprite;
+        this.game.physics.startSystem(Phaser.Physics.ARCADE);
         for (var i = 0;i < 50;i++) {
             new FlashingStar(this.game);
         }
-        new WaveManager(this.game,this.game.width/2,120);
-        new Score(this.game);
-        new Ship(this.game);
+        this.waveMgr = new WaveManager(this.game,this.game.width/2,120);
+        this.score = new Score(this.game);
+        this.ship = new Ship(this.game);
+    }
+
+    destroy() {
+        this.waveMgr = this.score = this.ship = null;
+    }
+
+    update() {
+        this.game.physics.arcade.collide(this.waveMgr.enemies,this.ship.playerMissileGroup,
+                                         this.shoot,null,this);
+    }
+
+
+    /**
+     * Handle player missile / enemy collisions.
+     * 
+     * @param {BaseEnemy} enemy
+     * @param {Missile} missile
+     * 
+     * @memberOf TestState
+     */
+    shoot(enemy:BaseEnemy,missile:Missile) : void {
+        // Get its value in points
+        var value:number = enemy.getScore();
+        // If 100 or more, show a little shimmering score
+        if (value >= 100) {
+            new ShortTermDisplayScore(this.game,
+                                      enemy.x+BaseEnemy.WIDTH/2,enemy.y+BaseEnemy.HEIGHT/2,
+                                      value);
+        }
+        // Add to score
+        this.score.addPoints(value);
+        // Destroy both objects
+        new Explosion(this.game,enemy.x,enemy.y);
+        enemy.destroy();
+        missile.destroy();
     }
 }
 

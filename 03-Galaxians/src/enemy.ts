@@ -139,6 +139,11 @@ class BaseEnemy extends Phaser.Sprite {
         this.owner = null;
     }
 
+    getScore(): number {
+        return (this.state == EnemyState.InFlight ? this.getScoreInFlight():
+                                                    this.getScoreInFormation());
+    }
+
     getScoreInFlight(): number { 
         return this.getScoreInFormation() * 2; 
     }

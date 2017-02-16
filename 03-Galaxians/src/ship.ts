@@ -11,7 +11,7 @@ class Ship extends Phaser.Sprite {
     private static WIDTH:number = 40;
     private static HEIGHT:number = 48;
     private cursors:Phaser.CursorKeys;
-    private playerMissileGroup:Phaser.Group;
+    public playerMissileGroup:Phaser.Group;
 
     /**
      * Creates an instance of Ship.

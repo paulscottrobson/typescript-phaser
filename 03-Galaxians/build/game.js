@@ -92,6 +92,10 @@ var BaseEnemy = (function (_super) {
         _super.prototype.destroy.call(this);
         this.owner = null;
     };
+    BaseEnemy.prototype.getScore = function () {
+        return (this.state == EnemyState.InFlight ? this.getScoreInFlight() :
+            this.getScoreInFormation());
+    };
     BaseEnemy.prototype.getScoreInFlight = function () {
         return this.getScoreInFormation() * 2;
     };
@@ -146,6 +150,21 @@ var Alien4 = (function (_super) {
     };
     return Alien4;
 }(BaseEnemy));
+var Explosion = (function (_super) {
+    __extends(Explosion, _super);
+    function Explosion(game, x, y) {
+        var _this = _super.call(this, game, x, y, 300) || this;
+        game.add.existing(_this);
+        _this.makeParticles("sprites", "dot");
+        _this.forEach(function (particle) {
+            particle.tint = _this.game.rnd.between(0, 1) ? 0xFF0000 : 0xFFFF00;
+        }, _this);
+        _this.start(true, 300, 0, 100);
+        _this.game.time.events.add(1000, function () { _this.destroy(); }, _this);
+        return _this;
+    }
+    return Explosion;
+}(Phaser.Particles.Arcade.Emitter));
 window.onload = function () {
     var game = new GalaxiansGame();
 };
@@ -183,12 +202,29 @@ var TestState = (function (_super) {
     }
     TestState.prototype.create = function () {
         var s;
+        this.game.physics.startSystem(Phaser.Physics.ARCADE);
         for (var i = 0; i < 50; i++) {
             new FlashingStar(this.game);
         }
-        new WaveManager(this.game, this.game.width / 2, 120);
-        new Score(this.game);
-        new Ship(this.game);
+        this.waveMgr = new WaveManager(this.game, this.game.width / 2, 120);
+        this.score = new Score(this.game);
+        this.ship = new Ship(this.game);
+    };
+    TestState.prototype.destroy = function () {
+        this.waveMgr = this.score = this.ship = null;
+    };
+    TestState.prototype.update = function () {
+        this.game.physics.arcade.collide(this.waveMgr.enemies, this.ship.playerMissileGroup, this.shoot, null, this);
+    };
+    TestState.prototype.shoot = function (enemy, missile) {
+        var value = enemy.getScore();
+        if (value >= 100) {
+            new ShortTermDisplayScore(this.game, enemy.x + BaseEnemy.WIDTH / 2, enemy.y + BaseEnemy.HEIGHT / 2, value);
+        }
+        this.score.addPoints(value);
+        new Explosion(this.game, enemy.x, enemy.y);
+        enemy.destroy();
+        missile.destroy();
     };
     return TestState;
 }(Phaser.State));
@@ -292,6 +328,9 @@ var Score = (function (_super) {
         _this.updateScore(0);
         return _this;
     }
+    Score.prototype.addPoints = function (points) {
+        this.updateScore(this.score + points);
+    };
     Score.prototype.updateScore = function (score) {
         this.score = score;
         var s = ("00000" + score.toString()).slice(-6);
@@ -337,6 +376,22 @@ var Ship = (function (_super) {
 }(Phaser.Sprite));
 Ship.WIDTH = 40;
 Ship.HEIGHT = 48;
+var ShortTermDisplayScore = (function (_super) {
+    __extends(ShortTermDisplayScore, _super);
+    function ShortTermDisplayScore(game, x, y, score) {
+        var _this = _super.call(this, game, x, y, "font", score.toString(), 20) || this;
+        game.add.existing(_this);
+        _this.anchor.setTo(0.5);
+        _this.position.setTo(x, y);
+        var tw = _this.game.add.tween(_this).to({ "alpha": 0.0 }, 400, Phaser.Easing.Linear.None, true, 300);
+        tw.onComplete.add(function () { _this.destroy(); }, _this);
+        return _this;
+    }
+    ShortTermDisplayScore.prototype.update = function () {
+        this.tint = this.game.rnd.integer();
+    };
+    return ShortTermDisplayScore;
+}(Phaser.BitmapText));
 var FlashingStar = (function (_super) {
     __extends(FlashingStar, _super);
     function FlashingStar(game) {
