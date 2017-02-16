@@ -14,7 +14,8 @@ var BaseEnemy = (function (_super) {
     function BaseEnemy(game, owner, x, y, baseImage) {
         var _this = _super.call(this, game, 0, 0, "sprites", "ship") || this;
         game.add.existing(_this);
-        game.physics.arcade.enable(_this);
+        game.physics.arcade.enableBody(_this);
+        _this.body.immovable = true;
         _this.anchor.setTo(0.5, 0.5);
         _this.animations.add("normal", [baseImage + "1", baseImage + "2"], 5, true);
         _this.animations.play("normal");
@@ -57,6 +58,16 @@ var BaseEnemy = (function (_super) {
                 this.x = xStart;
                 this.y = -BaseEnemy.HEIGHT;
                 this.state = EnemyState.Repositioning;
+                this.angle = 0;
+            }
+        }
+        if (this.state != EnemyState.Repositioning) {
+            var chance = this.game.time.elapsed * 120;
+            if (this.state == EnemyState.InFlight) {
+                chance = Math.max(1, Math.floor(chance / 40));
+            }
+            if (this.game.rnd.between(0, chance) == 0) {
+                this.owner.fireMissile(this.x, this.y + BaseEnemy.HEIGHT / 2);
             }
         }
     };
@@ -175,7 +186,9 @@ var TestState = (function (_super) {
         for (var i = 0; i < 50; i++) {
             new FlashingStar(this.game);
         }
-        new WaveManager(this.game, this.game.width / 2, 100);
+        new WaveManager(this.game, this.game.width / 2, 120);
+        new Score(this.game);
+        new Ship(this.game);
     };
     return TestState;
 }(Phaser.State));
@@ -186,10 +199,12 @@ var WaveManager = (function (_super) {
         game.add.existing(_this);
         _this.position.setTo(x, y);
         _this.anchor.setTo(0.5, 0.5);
+        _this.visible = false;
         _this.enemies = new Phaser.Group(game);
+        _this.enemyMissiles = new Phaser.Group(game);
         _this.direction = 1;
         _this.createWave();
-        game.time.events.add(200, _this.launch, _this);
+        game.time.events.add(2000, _this.launch, _this);
         return _this;
     }
     WaveManager.prototype.update = function () {
@@ -206,7 +221,7 @@ var WaveManager = (function (_super) {
     };
     WaveManager.prototype.destroy = function () {
         _super.prototype.destroy.call(this);
-        this.enemies = null;
+        this.enemies = this.enemyMissiles = null;
     };
     WaveManager.prototype.launch = function () {
         if (this.enemies.children.length > 0) {
@@ -238,11 +253,90 @@ var WaveManager = (function (_super) {
             this.enemies.add(new Alien1(this.game, this, n, 5));
         }
     };
+    WaveManager.prototype.fireMissile = function (x, y) {
+        var m = new Missile(this.game, x, y, 500);
+        this.enemyMissiles.add(m);
+    };
     WaveManager.prototype.getX = function () { return this.x; };
     WaveManager.prototype.getY = function () { return this.y; };
     return WaveManager;
 }(Phaser.Sprite));
 WaveManager.VELOCITY = 20;
+var Missile = (function (_super) {
+    __extends(Missile, _super);
+    function Missile(game, x, y, velocity) {
+        var _this = _super.call(this, game, x, y, "sprites", "missile") || this;
+        game.add.existing(_this);
+        game.physics.arcade.enableBody(_this);
+        _this.body.velocity.y = velocity;
+        _this.body.immovable = true;
+        return _this;
+    }
+    Missile.prototype.update = function () {
+        if (this.y < 0 || this.y > this.game.height) {
+            this.destroy();
+        }
+    };
+    return Missile;
+}(Phaser.Sprite));
+var Score = (function (_super) {
+    __extends(Score, _super);
+    function Score(game) {
+        var _this = _super.call(this, game) || this;
+        var t;
+        t = _this.add(game.add.bitmapText(game.width / 2, 20, "font", "HIGH SCORE", 40), true, 0);
+        t.anchor.setTo(0.5);
+        t = _this.add(game.add.bitmapText(game.width / 2, 60, "font", "?", 40), true, 1);
+        t.anchor.setTo(0.5);
+        t.tint = 0xFF0000;
+        _this.updateScore(0);
+        return _this;
+    }
+    Score.prototype.updateScore = function (score) {
+        this.score = score;
+        var s = ("00000" + score.toString()).slice(-6);
+        this.children[1].text = s;
+    };
+    return Score;
+}(Phaser.Group));
+var Ship = (function (_super) {
+    __extends(Ship, _super);
+    function Ship(game) {
+        var _this = _super.call(this, game, game.width / 2, game.height - 64, "sprites", "ship") || this;
+        _this.anchor.setTo(0.5);
+        _this.width = Ship.WIDTH;
+        _this.height = Ship.HEIGHT;
+        _this.cursors = game.input.keyboard.createCursorKeys();
+        game.add.existing(_this);
+        game.physics.arcade.enableBody(_this);
+        _this.body.drag.x = 250;
+        _this.body.immovable = true;
+        game.input.keyboard.addKey(Phaser.Keyboard.CONTROL).onDown.add(_this.fire, _this);
+        _this.playerMissileGroup = new Phaser.Group(game);
+        return _this;
+    }
+    Ship.prototype.update = function () {
+        if (this.cursors.right.isDown) {
+            this.body.velocity.x = Math.min(250, this.body.velocity.x + this.game.time.elapsed);
+        }
+        if (this.cursors.left.isDown) {
+            this.body.velocity.x = Math.max(-250, this.body.velocity.x - this.game.time.elapsed);
+        }
+        this.x = Math.max(0, Math.min(this.x, this.game.width));
+    };
+    Ship.prototype.fire = function () {
+        if (this.playerMissileGroup.children.length == 0) {
+            this.playerMissileGroup.add(new Missile(this.game, this.x, this.y, -1400));
+        }
+    };
+    Ship.prototype.destroy = function () {
+        this.playerMissileGroup.destroy();
+        this.playerMissileGroup = this.cursors = null;
+    };
+    return Ship;
+}(Phaser.Sprite));
+Ship.WIDTH = 40;
+Ship.HEIGHT = 48;
 var FlashingStar = (function (_super) {
     __extends(FlashingStar, _super);
     function FlashingStar(game) {

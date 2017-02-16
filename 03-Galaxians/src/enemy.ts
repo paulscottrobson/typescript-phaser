@@ -37,7 +37,8 @@ class BaseEnemy extends Phaser.Sprite {
     constructor(game:Phaser.Game,owner:WaveManager,x:number,y:number,baseImage:string) {
         super(game,0,0,"sprites","ship");
         game.add.existing(this);
-        game.physics.arcade.enable(this);
+        game.physics.arcade.enableBody(this);
+        this.body.immovable = true;
         this.anchor.setTo(0.5,0.5);
         this.animations.add("normal",[baseImage+"1",baseImage+"2"],5,true);
         this.animations.play("normal");
@@ -87,6 +88,17 @@ class BaseEnemy extends Phaser.Sprite {
                 this.x = xStart;
                 this.y = -BaseEnemy.HEIGHT;
                 this.state = EnemyState.Repositioning;
+                this.angle = 0;
+            }
+        }
+        // If not in repositioning option to shoot.
+        if (this.state != EnemyState.Repositioning) {
+            var chance:number = this.game.time.elapsed * 120;
+            if (this.state == EnemyState.InFlight) {
+                chance = Math.max(1,Math.floor(chance / 40));
+            }
+            if (this.game.rnd.between(0,chance) == 0) {
+                this.owner.fireMissile(this.x,this.y+BaseEnemy.HEIGHT/2);
             }
         }
     }

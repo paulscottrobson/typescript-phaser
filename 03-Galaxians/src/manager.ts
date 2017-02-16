@@ -5,6 +5,7 @@ class WaveManager extends Phaser.Sprite {
     private static VELOCITY:number = 20;
 
     private enemies:Phaser.Group;
+    private enemyMissiles:Phaser.Group;
     private direction:number;
 
     /**
@@ -22,13 +23,15 @@ class WaveManager extends Phaser.Sprite {
         game.add.existing(this);
         this.position.setTo(x,y);
         this.anchor.setTo(0.5,0.5);
+        this.visible = false;
         this.enemies = new Phaser.Group(game);
+        this.enemyMissiles = new Phaser.Group(game);
         // Start moving right
         this.direction = 1;
         // Create the attack wave.
         this.createWave();
         // Start an attack at some time in the future.
-        game.time.events.add(200,this.launch,this);
+        game.time.events.add(2000,this.launch,this);
     }
 
     /**
@@ -63,7 +66,7 @@ class WaveManager extends Phaser.Sprite {
      */
     destroy(): void {
         super.destroy();
-        this.enemies = null;
+        this.enemies = this.enemyMissiles = null;
     }
 
     /**
@@ -112,6 +115,19 @@ class WaveManager extends Phaser.Sprite {
             this.enemies.add(new Alien1(this.game,this,n,4));
             this.enemies.add(new Alien1(this.game,this,n,5));
         }
+    }
+
+    /**
+     * Missile firing is delegated to the manager so they can track it.
+     * 
+     * @param {number} x
+     * @param {number} y
+     * 
+     * @memberOf WaveManager
+     */
+    fireMissile(x:number,y:number) : void {
+        var m:Missile = new Missile(this.game,x,y,500);
+        this.enemyMissiles.add(m);
     }
 
     getX() : number { return this.x; }

@@ -51,20 +51,9 @@ class TestState extends Phaser.State {
         for (var i = 0;i < 50;i++) {
             new FlashingStar(this.game);
         }
-        new WaveManager(this.game,this.game.width/2,100);
-
-        /*
-        s = new Phaser.Sprite(this.game,64,64,"sprites","ship");
-        s.animations.add("test",["alien31","alien32"],5,true)
-        s.animations.play("test")
-        this.game.add.existing(s);
-        s.width = 256;s.height = 256;              
-         s = new Phaser.Sprite(this.game,364,64,"sprites","ship");
-        s.animations.add("test",["alien21","alien22"],5,true)
-        s.animations.play("test")
-        this.game.add.existing(s);
-        s.width = 256;s.height = 256;       
-        */
+        new WaveManager(this.game,this.game.width/2,120);
+        new Score(this.game);
+        new Ship(this.game);
     }
 }
 
