@@ -27,7 +27,6 @@ class Lives extends Phaser.Group {
         var s:Phaser.Sprite = new Phaser.Sprite(this.game,x,this.game.height-8,"sprites","lives");
         s.width = 32;s.height = 40;
         s.anchor.setTo(0,1);
-        console.log(s);
         this.game.add.existing(s);
         this.add(s,true,this.lives);
         this.lives++;

@@ -7,6 +7,7 @@ class WaveManager extends Phaser.Sprite {
     public enemies:Phaser.Group;
     public enemyMissiles:Phaser.Group;
     private direction:number;
+    public running:boolean;
 
     /**
      * Creates an instance of WaveManager. WaveManager controls the wave of Galaxian
@@ -31,7 +32,8 @@ class WaveManager extends Phaser.Sprite {
         // Create the attack wave.
         this.createWave();
         // Start an attack at some time in the future.
-        game.time.events.add(2000,this.launch,this);
+        game.time.events.add(3000,this.launch,this);
+        this.running = false;
     }
 
     /**
@@ -43,6 +45,7 @@ class WaveManager extends Phaser.Sprite {
     update() {
         // Change position
         this.x += this.direction * WaveManager.VELOCITY * this.game.time.elapsed / 1000;
+        
         // Stop at edge of screen. Enemies also will set direction if required
         if (this.x < 0) { this.direction = 1; }
         if (this.x > this.game.width) { this.direction = -1; }
@@ -76,7 +79,7 @@ class WaveManager extends Phaser.Sprite {
      */
     launch() : void {
         // Don't launch if no baddies
-        if (this.enemies.children.length > 0) {
+        if (this.enemies.children.length > 0 && this.running) {
             // Pick one randomly and set it to attack.
             var n:number = this.game.rnd.between(0,this.enemies.children.length-1);
             // Get that enemies cell number
@@ -90,9 +93,9 @@ class WaveManager extends Phaser.Sprite {
                 (<BaseEnemy>enemy).attackIf(xLaunch-1,yLaunch+1,onLeft);
                 (<BaseEnemy>enemy).attackIf(xLaunch+1,yLaunch+1,onLeft);
             }
-            // Fire another launch 1s - 4s in the future.
-            this.game.time.events.add(this.game.rnd.between(1500,6000),this.launch,this);
         }
+        // Fire another launch 1s - 4s in the future.
+        this.game.time.events.add(this.game.rnd.between(1500,6000),this.launch,this);
     }
 
     /**

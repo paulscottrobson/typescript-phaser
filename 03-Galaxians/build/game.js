@@ -61,7 +61,7 @@ var BaseEnemy = (function (_super) {
                 this.angle = 0;
             }
         }
-        if (this.state != EnemyState.Repositioning) {
+        if (this.state != EnemyState.Repositioning && this.owner.running) {
             var chance = this.game.time.elapsed * 120;
             if (this.state == EnemyState.InFlight) {
                 chance = Math.max(1, Math.floor(chance / 40));
@@ -185,7 +185,6 @@ var Lives = (function (_super) {
         s.width = 32;
         s.height = 40;
         s.anchor.setTo(0, 1);
-        console.log(s);
         this.game.add.existing(s);
         this.add(s, true, this.lives);
         this.lives++;
@@ -234,6 +233,7 @@ var TestState = (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     TestState.prototype.create = function () {
+        var _this = this;
         var s;
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
         for (var i = 0; i < 50; i++) {
@@ -243,12 +243,38 @@ var TestState = (function (_super) {
         this.score = new Score(this.game);
         this.ship = new Ship(this.game);
         this.lives = new Lives(this.game);
+        var btx = this.game.add.bitmapText(this.game.width / 2, this.game.height / 2, "font", "Player One", 40);
+        btx.anchor.setTo(0.5);
+        btx.tint = 0xFF0000;
+        this.game.time.events.add(1500, function () {
+            _this.setAction(true);
+            btx.destroy();
+        }, this);
+    };
+    TestState.prototype.setAction = function (state) {
+        this.waveMgr.running = this.ship.running = state;
     };
     TestState.prototype.destroy = function () {
         this.waveMgr = this.score = this.ship = this.lives = null;
     };
     TestState.prototype.update = function () {
         this.game.physics.arcade.collide(this.waveMgr.enemies, this.ship.playerMissileGroup, this.shoot, null, this);
+        this.game.physics.arcade.collide(this.ship, this.waveMgr.enemyMissiles, this.lostLife, null, this);
+        this.game.physics.arcade.collide(this.ship, this.waveMgr.enemies, this.lostLife, null, this);
+    };
+    TestState.prototype.lostLife = function (ship, object) {
+        var _this = this;
+        if (ship.running) {
+            object.destroy();
+            this.lives.removeLife();
+            this.setAction(false);
+            new Explosion(this.game, ship.x, ship.y);
+            if (this.lives.getLives() > 0) {
+                this.game.time.events.add(1000, function () { _this.setAction(true); }, this);
+            }
+            else {
+            }
+        }
     };
     TestState.prototype.shoot = function (enemy, missile) {
         var value = enemy.getScore();
@@ -260,7 +286,7 @@ var TestState = (function (_super) {
         enemy.destroy();
         missile.destroy();
         if (this.waveMgr.enemies.children.length == 0) {
-            this.waveMgr.createWave();
+            this.game.time.events.add(2000, this.waveMgr.createWave, this.waveMgr);
         }
     };
     return TestState;
@@ -277,7 +303,8 @@ var WaveManager = (function (_super) {
         _this.enemyMissiles = new Phaser.Group(game);
         _this.direction = 1;
         _this.createWave();
-        game.time.events.add(2000, _this.launch, _this);
+        game.time.events.add(3000, _this.launch, _this);
+        _this.running = false;
         return _this;
     }
     WaveManager.prototype.update = function () {
@@ -297,7 +324,7 @@ var WaveManager = (function (_super) {
         this.enemies = this.enemyMissiles = null;
     };
     WaveManager.prototype.launch = function () {
-        if (this.enemies.children.length > 0) {
+        if (this.enemies.children.length > 0 && this.running) {
             var n = this.game.rnd.between(0, this.enemies.children.length - 1);
             var xLaunch = this.enemies.children[n].xCell;
             var yLaunch = this.enemies.children[n].yCell;
@@ -308,8 +335,8 @@ var WaveManager = (function (_super) {
                 enemy.attackIf(xLaunch - 1, yLaunch + 1, onLeft);
                 enemy.attackIf(xLaunch + 1, yLaunch + 1, onLeft);
             }
-            this.game.time.events.add(this.game.rnd.between(1500, 6000), this.launch, this);
         }
+        this.game.time.events.add(this.game.rnd.between(1500, 6000), this.launch, this);
     };
     WaveManager.prototype.createWave = function () {
         this.enemies.add(new Alien4(this.game, this, -2, 0));
@@ -389,6 +416,7 @@ var Ship = (function (_super) {
         _this.body.immovable = true;
         game.input.keyboard.addKey(Phaser.Keyboard.CONTROL).onDown.add(_this.fire, _this);
         _this.playerMissileGroup = new Phaser.Group(game);
+        _this.running = false;
         return _this;
     }
     Ship.prototype.update = function () {
@@ -401,7 +429,7 @@ var Ship = (function (_super) {
         this.x = Math.max(0, Math.min(this.x, this.game.width));
     };
     Ship.prototype.fire = function () {
-        if (this.playerMissileGroup.children.length == 0) {
+        if (this.playerMissileGroup.children.length == 0 && this.running) {
             this.playerMissileGroup.add(new Missile(this.game, this.x, this.y, -1400));
         }
     };

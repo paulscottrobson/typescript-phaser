@@ -62,6 +62,17 @@ class TestState extends Phaser.State {
         this.score = new Score(this.game);
         this.ship = new Ship(this.game);
         this.lives = new Lives(this.game);
+        var btx:Phaser.BitmapText = this.game.add.bitmapText(this.game.width/2,this.game.height/2,
+                                    "font","Player One",40);
+        btx.anchor.setTo(0.5);btx.tint = 0xFF0000;
+        this.game.time.events.add(1500,
+            () => { this.setAction(true);
+                    btx.destroy(); },
+        this);
+    }
+
+    setAction(state:boolean) : void {
+        this.waveMgr.running = this.ship.running = state;
     }
 
     destroy() {
@@ -71,8 +82,40 @@ class TestState extends Phaser.State {
     update() {
         this.game.physics.arcade.collide(this.waveMgr.enemies,this.ship.playerMissileGroup,
                                          this.shoot,null,this);
+        this.game.physics.arcade.collide(this.ship,this.waveMgr.enemyMissiles,
+                                         this.lostLife,null,this);                                         
+        this.game.physics.arcade.collide(this.ship,this.waveMgr.enemies,
+                                         this.lostLife,null,this);                                         
     }
 
+
+    /**
+     * Handle ship / missile or enemy collision
+     * 
+     * @param {Ship} ship
+     * @param {*} object enemy or missile group
+     * 
+     * @memberOf TestState
+     */
+    lostLife(ship:Ship,object:any) {
+        // If ship is actually running (stops multiple kills)
+        if (ship.running) {
+            // Destroy the killing object            
+            object.destroy();
+            // Lose a life
+            this.lives.removeLife();
+            // Stop the action. (no shooting, diving)
+            this.setAction(false);
+            // Show an explosion
+            new Explosion(this.game,ship.x,ship.y);
+            // Restart after 1 second.
+            if (this.lives.getLives() > 0) {
+                this.game.time.events.add(1000,() => { this.setAction(true); },this);
+            } else {
+                // TODO: Game over stuff
+            }
+        }
+    }
 
     /**
      * Handle player missile / enemy collisions.
@@ -97,9 +140,9 @@ class TestState extends Phaser.State {
         new Explosion(this.game,enemy.x,enemy.y);
         enemy.destroy();
         missile.destroy();
-        // If destroyed all enemies create a new wave of them.
+        // If destroyed all enemies create a new wave of them after 2 seconds.
         if (this.waveMgr.enemies.children.length == 0) {
-            this.waveMgr.createWave();
+            this.game.time.events.add(2000,this.waveMgr.createWave,this.waveMgr);
         }
     }
 }

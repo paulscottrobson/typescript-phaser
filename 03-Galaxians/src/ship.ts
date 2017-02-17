@@ -12,6 +12,7 @@ class Ship extends Phaser.Sprite {
     private static HEIGHT:number = 48;
     private cursors:Phaser.CursorKeys;
     public playerMissileGroup:Phaser.Group;
+    public running:boolean;
 
     /**
      * Creates an instance of Ship.
@@ -37,6 +38,7 @@ class Ship extends Phaser.Sprite {
         game.input.keyboard.addKey(Phaser.Keyboard.CONTROL).onDown.add(this.fire,this);
         // Add Player missile group for all player missiles
         this.playerMissileGroup = new Phaser.Group(game);
+        this.running = false;
     }
 
     update() : void {
@@ -53,7 +55,7 @@ class Ship extends Phaser.Sprite {
 
     fire() : void {
         // Only fire if no missiles in flight. Will become zero when missile destroyed.
-        if (this.playerMissileGroup.children.length == 0) {
+        if (this.playerMissileGroup.children.length == 0 && this.running) {
             this.playerMissileGroup.add(new Missile(this.game,this.x,this.y,-1400));
         }
     }

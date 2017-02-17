@@ -54,7 +54,7 @@ class BaseEnemy extends Phaser.Sprite {
      * 
      * @memberOf BaseEnemy
      */
-    update(): void {
+    update(): void {        
         // Work out where it is supposed to be on the screen relative to the owner
         var xStart:number = this.owner.getX()+(this.xCell+0.5) * (BaseEnemy.WIDTH+BaseEnemy.SPACING);
         var yStart:number = this.owner.getY()+this.yCell * (BaseEnemy.HEIGHT+BaseEnemy.SPACING);
@@ -92,7 +92,7 @@ class BaseEnemy extends Phaser.Sprite {
             }
         }
         // If not in repositioning option to shoot.
-        if (this.state != EnemyState.Repositioning) {
+        if (this.state != EnemyState.Repositioning && this.owner.running) {
             var chance:number = this.game.time.elapsed * 120;
             if (this.state == EnemyState.InFlight) {
                 chance = Math.max(1,Math.floor(chance / 40));
