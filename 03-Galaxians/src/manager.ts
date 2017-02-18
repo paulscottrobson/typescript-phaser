@@ -93,6 +93,7 @@ class WaveManager extends Phaser.Sprite {
                 (<BaseEnemy>enemy).attackIf(xLaunch-1,yLaunch+1,onLeft);
                 (<BaseEnemy>enemy).attackIf(xLaunch+1,yLaunch+1,onLeft);
             }
+            (<GameState>(this.game.state.getCurrentState())).sfx["swoop"].play();
         }
         // Fire another launch 1s - 4s in the future.
         this.game.time.events.add(this.game.rnd.between(1500,6000),this.launch,this);

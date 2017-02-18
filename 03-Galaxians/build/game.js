@@ -165,6 +165,78 @@ var Explosion = (function (_super) {
     }
     return Explosion;
 }(Phaser.Particles.Arcade.Emitter));
+var GameState = (function (_super) {
+    __extends(GameState, _super);
+    function GameState() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    GameState.prototype.create = function () {
+        var _this = this;
+        var s;
+        this.game.physics.startSystem(Phaser.Physics.ARCADE);
+        for (var i = 0; i < 50; i++) {
+            new FlashingStar(this.game);
+        }
+        this.waveMgr = new WaveManager(this.game, this.game.width / 2, 120);
+        this.score = new Score(this.game);
+        this.ship = new Ship(this.game);
+        this.lives = new Lives(this.game);
+        this.sfx = PreloadState.getSounds(this);
+        var btx = this.game.add.bitmapText(this.game.width / 2, this.game.height / 2, "font", "Player One", 40);
+        btx.anchor.setTo(0.5);
+        btx.tint = 0xFF0000;
+        this.game.time.events.add(2500, function () {
+            _this.setAction(true);
+            _this.sfx["loop"].play().loopFull().volume = 0.5;
+            btx.destroy();
+        }, this);
+        this.sfx["start"].play();
+    };
+    GameState.prototype.setAction = function (state) {
+        this.waveMgr.running = this.ship.running = state;
+    };
+    GameState.prototype.destroy = function () {
+        this.sfx = this.waveMgr = this.score = this.ship = this.lives = null;
+    };
+    GameState.prototype.update = function () {
+        this.game.physics.arcade.collide(this.waveMgr.enemies, this.ship.playerMissileGroup, this.shoot, null, this);
+        this.game.physics.arcade.collide(this.ship, this.waveMgr.enemyMissiles, this.lostLife, null, this);
+        this.game.physics.arcade.collide(this.ship, this.waveMgr.enemies, this.lostLife, null, this);
+    };
+    GameState.prototype.lostLife = function (ship, object) {
+        var _this = this;
+        if (ship.running) {
+            this.sfx["death"].play();
+            object.destroy();
+            this.lives.removeLife();
+            this.setAction(false);
+            new Explosion(this.game, ship.x, ship.y);
+            if (this.lives.getLives() > 0) {
+                this.game.time.events.add(1000, function () { _this.setAction(true); }, this);
+            }
+            else {
+                var t = this.game.add.bitmapText(this.game.width / 2, this.game.height / 2, "font", "Game Over", 48);
+                t.anchor.setTo(0.5);
+                t.tint = 0xFF0000;
+            }
+        }
+    };
+    GameState.prototype.shoot = function (enemy, missile) {
+        this.sfx["explosion"].play();
+        var value = enemy.getScore();
+        if (value >= 100) {
+            new ShortTermDisplayScore(this.game, enemy.x + BaseEnemy.WIDTH / 2, enemy.y + BaseEnemy.HEIGHT / 2, value);
+        }
+        this.score.addPoints(value);
+        new Explosion(this.game, enemy.x, enemy.y);
+        enemy.destroy();
+        missile.destroy();
+        if (this.waveMgr.enemies.children.length == 0) {
+            this.game.time.events.add(2000, this.waveMgr.createWave, this.waveMgr);
+        }
+    };
+    return GameState;
+}(Phaser.State));
 var Lives = (function (_super) {
     __extends(Lives, _super);
     function Lives(game) {
@@ -205,7 +277,7 @@ var GalaxiansGame = (function (_super) {
     function GalaxiansGame() {
         var _this = _super.call(this, 640, 960, Phaser.AUTO, "", null, false, false) || this;
         _this.state.add("Preload", new PreloadState());
-        _this.state.add("Test", new TestState());
+        _this.state.add("Main", new GameState());
         _this.state.start("Preload");
         return _this;
     }
@@ -223,74 +295,23 @@ var PreloadState = (function (_super) {
         this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         this.game.load.atlas("sprites", "assets/sprites/sprites.png", "assets/sprites/sprites.json");
         this.game.load.bitmapFont("font", "assets/fonts/font.png", "assets/fonts/font.fnt");
-        this.game.load.onLoadComplete.add(function () { _this.game.state.start("Test"); }, this);
+        for (var _i = 0, _a = PreloadState.sfxList; _i < _a.length; _i++) {
+            var sound = _a[_i];
+            this.game.load.audio(sound, ["assets/sounds/" + sound + ".mp3", "assets/sounds/" + sound + ".ogg"]);
+        }
+        this.game.load.onLoadComplete.add(function () { _this.game.state.start("Main"); }, this);
+    };
+    PreloadState.getSounds = function (state) {
+        var sounds = {};
+        for (var _i = 0, _a = PreloadState.sfxList; _i < _a.length; _i++) {
+            var sound = _a[_i];
+            sounds[sound] = state.add.audio(sound);
+        }
+        return sounds;
     };
     return PreloadState;
 }(Phaser.State));
-var TestState = (function (_super) {
-    __extends(TestState, _super);
-    function TestState() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    TestState.prototype.create = function () {
-        var _this = this;
-        var s;
-        this.game.physics.startSystem(Phaser.Physics.ARCADE);
-        for (var i = 0; i < 50; i++) {
-            new FlashingStar(this.game);
-        }
-        this.waveMgr = new WaveManager(this.game, this.game.width / 2, 120);
-        this.score = new Score(this.game);
-        this.ship = new Ship(this.game);
-        this.lives = new Lives(this.game);
-        var btx = this.game.add.bitmapText(this.game.width / 2, this.game.height / 2, "font", "Player One", 40);
-        btx.anchor.setTo(0.5);
-        btx.tint = 0xFF0000;
-        this.game.time.events.add(1500, function () {
-            _this.setAction(true);
-            btx.destroy();
-        }, this);
-    };
-    TestState.prototype.setAction = function (state) {
-        this.waveMgr.running = this.ship.running = state;
-    };
-    TestState.prototype.destroy = function () {
-        this.waveMgr = this.score = this.ship = this.lives = null;
-    };
-    TestState.prototype.update = function () {
-        this.game.physics.arcade.collide(this.waveMgr.enemies, this.ship.playerMissileGroup, this.shoot, null, this);
-        this.game.physics.arcade.collide(this.ship, this.waveMgr.enemyMissiles, this.lostLife, null, this);
-        this.game.physics.arcade.collide(this.ship, this.waveMgr.enemies, this.lostLife, null, this);
-    };
-    TestState.prototype.lostLife = function (ship, object) {
-        var _this = this;
-        if (ship.running) {
-            object.destroy();
-            this.lives.removeLife();
-            this.setAction(false);
-            new Explosion(this.game, ship.x, ship.y);
-            if (this.lives.getLives() > 0) {
-                this.game.time.events.add(1000, function () { _this.setAction(true); }, this);
-            }
-            else {
-            }
-        }
-    };
-    TestState.prototype.shoot = function (enemy, missile) {
-        var value = enemy.getScore();
-        if (value >= 100) {
-            new ShortTermDisplayScore(this.game, enemy.x + BaseEnemy.WIDTH / 2, enemy.y + BaseEnemy.HEIGHT / 2, value);
-        }
-        this.score.addPoints(value);
-        new Explosion(this.game, enemy.x, enemy.y);
-        enemy.destroy();
-        missile.destroy();
-        if (this.waveMgr.enemies.children.length == 0) {
-            this.game.time.events.add(2000, this.waveMgr.createWave, this.waveMgr);
-        }
-    };
-    return TestState;
-}(Phaser.State));
+PreloadState.sfxList = ["death", "explosion", "fire", "loop", "start", "swoop"];
 var WaveManager = (function (_super) {
     __extends(WaveManager, _super);
     function WaveManager(game, x, y) {
@@ -335,6 +356,7 @@ var WaveManager = (function (_super) {
                 enemy.attackIf(xLaunch - 1, yLaunch + 1, onLeft);
                 enemy.attackIf(xLaunch + 1, yLaunch + 1, onLeft);
             }
+            (this.game.state.getCurrentState()).sfx["swoop"].play();
         }
         this.game.time.events.add(this.game.rnd.between(1500, 6000), this.launch, this);
     };
@@ -384,7 +406,7 @@ var Score = (function (_super) {
     function Score(game) {
         var _this = _super.call(this, game) || this;
         var t;
-        t = _this.add(game.add.bitmapText(game.width / 2, 20, "font", "HIGH SCORE", 40), true, 0);
+        t = _this.add(game.add.bitmapText(game.width / 2, 20, "font", "1 UP", 40), true, 0);
         t.anchor.setTo(0.5);
         t = _this.add(game.add.bitmapText(game.width / 2, 60, "font", "?", 40), true, 1);
         t.anchor.setTo(0.5);
@@ -431,6 +453,7 @@ var Ship = (function (_super) {
     Ship.prototype.fire = function () {
         if (this.playerMissileGroup.children.length == 0 && this.running) {
             this.playerMissileGroup.add(new Missile(this.game, this.x, this.y, -1400));
+            (this.game.state.getCurrentState()).sfx["fire"].play();
         }
     };
     Ship.prototype.destroy = function () {

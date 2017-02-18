@@ -57,6 +57,7 @@ class Ship extends Phaser.Sprite {
         // Only fire if no missiles in flight. Will become zero when missile destroyed.
         if (this.playerMissileGroup.children.length == 0 && this.running) {
             this.playerMissileGroup.add(new Missile(this.game,this.x,this.y,-1400));
+            (<GameState>(this.game.state.getCurrentState())).sfx["fire"].play();
         }
     }
 
