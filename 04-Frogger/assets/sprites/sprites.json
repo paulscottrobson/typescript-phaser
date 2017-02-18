@@ -1,0 +1,196 @@
+{
+    "frames":{
+        "dead": {
+            "frame":{ "x":64,"y":180,"w":24,"h":24 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":24,"h":24 },
+            "sourceSize":{ "w":24,"h":24 }
+        },
+        "turtle31": {
+            "frame":{ "x":100,"y":0,"w":94,"h":26 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":94,"h":26 },
+            "sourceSize":{ "w":94,"h":26 }
+        },
+        "life": {
+            "frame":{ "x":124,"y":28,"w":14,"h":14 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":14,"h":14 },
+            "sourceSize":{ "w":14,"h":14 }
+        },
+        "car1": {
+            "frame":{ "x":128,"y":152,"w":32,"h":28 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":32,"h":28 },
+            "sourceSize":{ "w":32,"h":28 }
+        },
+        "turtle24": {
+            "frame":{ "x":184,"y":28,"w":62,"h":26 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":62,"h":26 },
+            "sourceSize":{ "w":62,"h":26 }
+        },
+        "log2": {
+            "frame":{ "x":0,"y":128,"w":116,"h":20 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":116,"h":20 },
+            "sourceSize":{ "w":116,"h":20 }
+        },
+        "turtle35": {
+            "frame":{ "x":0,"y":72,"w":94,"h":26 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":94,"h":26 },
+            "sourceSize":{ "w":94,"h":26 }
+        },
+        "turtle21": {
+            "frame":{ "x":192,"y":56,"w":62,"h":26 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":62,"h":26 },
+            "sourceSize":{ "w":62,"h":26 }
+        },
+        "turtle33": {
+            "frame":{ "x":96,"y":72,"w":94,"h":26 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":94,"h":26 },
+            "sourceSize":{ "w":94,"h":26 }
+        },
+        "turtle22": {
+            "frame":{ "x":192,"y":84,"w":62,"h":26 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":62,"h":26 },
+            "sourceSize":{ "w":62,"h":26 }
+        },
+        "frog": {
+            "frame":{ "x":92,"y":180,"w":24,"h":24 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":24,"h":24 },
+            "sourceSize":{ "w":24,"h":24 }
+        },
+        "log1": {
+            "frame":{ "x":120,"y":128,"w":84,"h":20 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":84,"h":20 },
+            "sourceSize":{ "w":84,"h":20 }
+        },
+        "jump": {
+            "frame":{ "x":120,"y":184,"w":24,"h":24 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":24,"h":24 },
+            "sourceSize":{ "w":24,"h":24 }
+        },
+        "home": {
+            "frame":{ "x":0,"y":0,"w":96,"h":47 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":96,"h":47 },
+            "sourceSize":{ "w":96,"h":47 }
+        },
+        "path": {
+            "frame":{ "x":208,"y":112,"w":32,"h":32 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":32,"h":32 },
+            "sourceSize":{ "w":32,"h":32 }
+        },
+        "fly": {
+            "frame":{ "x":100,"y":28,"w":22,"h":18 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":22,"h":18 },
+            "sourceSize":{ "w":22,"h":18 }
+        },
+        "car5": {
+            "frame":{ "x":196,"y":0,"w":54,"h":20 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":54,"h":20 },
+            "sourceSize":{ "w":54,"h":20 }
+        },
+        "turtle32": {
+            "frame":{ "x":0,"y":100,"w":94,"h":26 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":94,"h":26 },
+            "sourceSize":{ "w":94,"h":26 }
+        },
+        "car2": {
+            "frame":{ "x":0,"y":180,"w":28,"h":24 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":28,"h":24 },
+            "sourceSize":{ "w":28,"h":24 }
+        },
+        "log3": {
+            "frame":{ "x":0,"y":48,"w":180,"h":20 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":180,"h":20 },
+            "sourceSize":{ "w":180,"h":20 }
+        },
+        "turtle23": {
+            "frame":{ "x":0,"y":152,"w":62,"h":26 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":62,"h":26 },
+            "sourceSize":{ "w":62,"h":26 }
+        },
+        "turtle34": {
+            "frame":{ "x":96,"y":100,"w":94,"h":26 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":94,"h":26 },
+            "sourceSize":{ "w":94,"h":26 }
+        },
+        "car4": {
+            "frame":{ "x":164,"y":152,"w":32,"h":28 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":32,"h":28 },
+            "sourceSize":{ "w":32,"h":28 }
+        },
+        "croc": {
+            "frame":{ "x":208,"y":148,"w":30,"h":32 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":30,"h":32 },
+            "sourceSize":{ "w":30,"h":32 }
+        },
+        "turtle25": {
+            "frame":{ "x":64,"y":152,"w":62,"h":26 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":62,"h":26 },
+            "sourceSize":{ "w":62,"h":26 }
+        },
+        "car3": {
+            "frame":{ "x":32,"y":180,"w":30,"h":20 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":30,"h":20 },
+            "sourceSize":{ "w":30,"h":20 }
+        }
+    },
+    "meta":{
+        "app":"Paul Robson's Python texture packer",
+        "version":"1.0",
+        "image":"sprites.png",
+        "size":{
+             "w":256,
+             "h":210
+         },
+         "scale":1
+    }
+}
