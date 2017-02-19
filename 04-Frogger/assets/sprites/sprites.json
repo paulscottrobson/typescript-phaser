@@ -15,7 +15,7 @@
             "sourceSize":{ "w":94,"h":26 }
         },
         "life": {
-            "frame":{ "x":124,"y":28,"w":14,"h":14 },
+            "frame":{ "x":152,"y":28,"w":14,"h":14 },
             "rotated":false,
             "trimmed":false,
             "spriteSourceSize":{ "x":0,"y":0,"w":14,"h":14 },
@@ -62,6 +62,13 @@
             "trimmed":false,
             "spriteSourceSize":{ "x":0,"y":0,"w":94,"h":26 },
             "sourceSize":{ "w":94,"h":26 }
+        },
+        "water": {
+            "frame":{ "x":124,"y":28,"w":25,"h":11 },
+            "rotated":false,
+            "trimmed":false,
+            "spriteSourceSize":{ "x":0,"y":0,"w":25,"h":11 },
+            "sourceSize":{ "w":25,"h":11 }
         },
         "turtle22": {
             "frame":{ "x":192,"y":84,"w":62,"h":26 },

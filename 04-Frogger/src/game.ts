@@ -2,132 +2,77 @@
 
 class GameState extends Phaser.State {
 
-    private waveMgr:WaveManager;
-    private score:Score;
-    private ship:Ship;
-    private lives:Lives;
-    public  sfx:SoundCollection;
+    private sfx:SoundCollection;
+
+    private static RIVER_ROWS:number = 5;
+    private static ROAD_ROWS:number = 5;
+    private static GAME_ROWS:number = GameState.ROAD_ROWS+GameState.RIVER_ROWS+5;
+    private rowSize:number;
 
     create() : void {
-        var s:Phaser.Sprite;
-        // Start up physics
-        this.game.physics.startSystem(Phaser.Physics.ARCADE);
-        // Draw the stars
-        for (var i = 0;i < 50;i++) {
-            new FlashingStar(this.game);
-        }
-        // Create main objects
-        this.waveMgr = new WaveManager(this.game,this.game.width/2,120);
-        this.score = new Score(this.game);
-        this.ship = new Ship(this.game);
-        this.lives = new Lives(this.game);
-        // Load all the SFX
+        // Load the sounds.
         this.sfx = PreloadState.getSounds(this);
-        // Put first text on screen
-        var btx:Phaser.BitmapText = this.game.add.bitmapText(this.game.width/2,this.game.height/2,
-                                    "font","Player One",40);
-        btx.anchor.setTo(0.5);btx.tint = 0xFF0000;
-        // After 2.5s remove it, start things, start the looped sfx.
-        this.game.time.events.add(2500,
-            () => { this.setAction(true);
-                    this.sfx["loop"].play().loopFull().volume = 0.5;
-                    btx.destroy(); },
-        this);
-        // Play little tune.
-        this.sfx["start"].play();
-    }
-
-
-    /**
-     * Stops or starts active parts of game. Ship and Enemies still move, but nothing
-     * aggressive can happen.
-     * 
-     * @param {boolean} state
-     * 
-     * @memberOf GameState
-     */
-    setAction(state:boolean) : void {
-        this.waveMgr.running = this.ship.running = state;
+        // Calculate row size
+        this.rowSize = this.game.height / GameState.GAME_ROWS;
+        // Add water area
+        this.game.add.tileSprite(0,0,this.game.width,this.rowSize*(3+GameState.RIVER_ROWS),"sprites","water");
+        // Add the two paths and the home area
+        this.createPath("path",GameState.GAME_ROWS-1,false);
+        this.createPath("path",GameState.GAME_ROWS-1-GameState.ROAD_ROWS-1,false);
+        this.createPath("home",2,true);
     }
 
     destroy() {
-        this.sfx = this.waveMgr = this.score = this.ship = this.lives = null;
+        this.sfx = null;
     }
 
     update() {
-        this.game.physics.arcade.collide(this.waveMgr.enemies,this.ship.playerMissileGroup,
-                                         this.shoot,null,this);
-        this.game.physics.arcade.collide(this.ship,this.waveMgr.enemyMissiles,
-                                         this.lostLife,null,this);                                         
-        this.game.physics.arcade.collide(this.ship,this.waveMgr.enemies,
-                                         this.lostLife,null,this);                                         
     }
 
-
+    
     /**
-     * Handle ship / missile or enemy collision
+     * Create a solid line of a tile. The 'home' positions take up 1.5 rows rather than
+     * one row, which go up into the previos row.
      * 
-     * @param {Ship} ship
-     * @param {*} object enemy or missile group
+     * @param {string} tile to use
+     * @param {number} rowY horizontal position
+     * @param {boolean} isHome is the 'home' line.
      * 
-     * @memberOf TestState
+     * @memberOf GameState
      */
-    lostLife(ship:Ship,object:any) {
-        // If ship is actually running (stops multiple kills)
-        if (ship.running) {
-            this.sfx["death"].play();
-            // Destroy the killing object            
-            object.destroy();
-            // Lose a life
-            this.lives.removeLife();
-            // Stop the action. (no shooting, diving)
-            this.setAction(false);
-            // Show an explosion
-            new Explosion(this.game,ship.x,ship.y);
-            // Restart after 1 second if lives left
-            if (this.lives.getLives() > 0) {
-                this.game.time.events.add(1000,() => { this.setAction(true); },this);
-            } else {
-                // Display game over.
-                var t:Phaser.BitmapText = this.game.add.bitmapText(this.game.width/2,
-                                                                   this.game.height/2,
-                                                                   "font",
-                                                                   "Game Over",
-                                                                   48);
-                t.anchor.setTo(0.5);
-                t.tint = 0xFF0000;                                                                   
-            }
+    createPath(tile:string,rowY:number,isHome:boolean): void {
+        // Calculate vertical position
+        var y:number = rowY * this.rowSize
+        // Adjust half a row up for home.
+        if (isHome) { y = y - this.rowSize / 2; }
+        // Need this image to be able to rescale the tile.
+        var image:Phaser.Image = new Phaser.Image(this.game,0,0,"sprites",tile);
+        var tspr:Phaser.TileSprite;
+        // Create the tiled sprite.
+        tspr = new Phaser.TileSprite(this.game,0,y,this.game.width,
+                                     isHome ? this.rowSize*3/2:this.rowSize,"sprites",tile);
+        this.game.add.existing(tspr);
+        // Scale the tile so one instance fills the row height.
+        tspr.tileScale.x = tspr.tileScale.y = this.rowSize / image.height;
+        // Fixed up differently for the home slots.
+        if (isHome) {
+            tspr.tileScale.x = this.game.width / image.width / 5;
+            tspr.x = - this.game.width * 0.15;
+            tspr.width = this.game.width - tspr.x;
+            tspr.tileScale.y = this.rowSize * 3 / 2 / image.height;            
         }
+        // We don't need this image any more.
+        image.destroy();
     }
-
     /**
-     * Handle player missile / enemy collisions.
+     * Retrieve a sound instance.
      * 
-     * @param {BaseEnemy} enemy
-     * @param {Missile} missile
+     * @param {string} key
+     * @returns {Phaser.Sound}
      * 
-     * @memberOf TestState
+     * @memberOf GameState
      */
-    shoot(enemy:BaseEnemy,missile:Missile) : void {
-        this.sfx["explosion"].play();
-        // Get its value in points
-        var value:number = enemy.getScore();
-        // If 100 or more, show a little shimmering score
-        if (value >= 100) {
-            new ShortTermDisplayScore(this.game,
-                                      enemy.x+BaseEnemy.WIDTH/2,enemy.y+BaseEnemy.HEIGHT/2,
-                                      value);
-        }
-        // Add to score
-        this.score.addPoints(value);
-        // Destroy both objects
-        new Explosion(this.game,enemy.x,enemy.y);
-        enemy.destroy();
-        missile.destroy();
-        // If destroyed all enemies create a new wave of them after 2 seconds.
-        if (this.waveMgr.enemies.children.length == 0) {
-            this.game.time.events.add(2000,this.waveMgr.createWave,this.waveMgr);
-        }
+    getSound(key:string) : Phaser.Sound {
+        return this.sfx[key];
     }
 }
-

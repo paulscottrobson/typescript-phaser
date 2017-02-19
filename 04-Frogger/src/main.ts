@@ -1,15 +1,15 @@
 /// <reference path="../lib/phaser.comments.d.ts"/>
 
 window.onload = function() {
-    var game = new GalaxiansGame();
+    var game = new FroggerGame();
 }
 
 /**
  * Game Class
- * @class GalaxiansGame
+ * @class FroggerGame
  * @extends {Phaser.Game}
  */
-class GalaxiansGame extends Phaser.Game {
+class FroggerGame extends Phaser.Game {
 
     constructor() {
         // Call the super constructor.
@@ -33,7 +33,7 @@ interface SoundCollection {
 
 class PreloadState extends Phaser.State {
 
-    public static sfxList:string[] = ["death","explosion","fire","loop","start","swoop"];
+    public static sfxList:string[] = [ "extra","hop","splash","squash","tune" ];
 
     preload(): void {
         // Make the game window fit the display area. Doesn't work in the Game constructor.
