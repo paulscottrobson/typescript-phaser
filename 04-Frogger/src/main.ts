@@ -49,7 +49,7 @@ class PreloadState extends Phaser.State {
             this.game.load.audio(sound,["assets/sounds/"+sound+".mp3","assets/sounds/"+sound+".ogg"]);
         }
         // Switch to game state when load complete.
-        this.game.load.onLoadComplete.add(() => { this.game.state.start("Main"); },this);
+        this.game.load.onLoadComplete.add(() => { this.game.state.start("Main",true,false,1); },this);
     }
 
 

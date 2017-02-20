@@ -8,6 +8,12 @@ class GameState extends Phaser.State {
     private static ROAD_ROWS:number = 5;
     private static GAME_ROWS:number = GameState.ROAD_ROWS+GameState.RIVER_ROWS+5;
     private rowSize:number;
+    private level:number;
+    private scrollers:Scroller[];
+
+    init(level:number): void {
+        this.level = level;
+    }
 
     create() : void {
         // Load the sounds.
@@ -20,6 +26,18 @@ class GameState extends Phaser.State {
         this.createPath("path",GameState.GAME_ROWS-1,false);
         this.createPath("path",GameState.GAME_ROWS-1-GameState.ROAD_ROWS-1,false);
         this.createPath("home",2,true);
+        // Create the 'traffic'
+        this.scrollers = [];
+        for (var row = 1;row <= GameState.RIVER_ROWS;row++) {
+            var n:number = row + 2;
+            var velocity:number = (10+(GameState.RIVER_ROWS-row)*5) * ((row % 2 == 0) ? 1 : -1);
+            this.scrollers[n] = new RiverScroller(this.game,this.rowSize*n+this.rowSize/2,this.rowSize,this.level,velocity);
+        }
+        for (var row = 1;row <= GameState.ROAD_ROWS;row++) {
+            var n:number = row + 3 + GameState.RIVER_ROWS;
+            var velocity:number = (10+(GameState.RIVER_ROWS-row)*5) * ((row % 2 == 0) ? 1 : -1);
+            this.scrollers[n] = new RoadScroller(this.game,this.rowSize*n+this.rowSize/2,this.rowSize,this.level,velocity);
+        }
     }
 
     destroy() {
